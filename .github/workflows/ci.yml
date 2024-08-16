@@ -10,7 +10,7 @@ env:
 
 jobs:
   build:
-    runs-on: xensifter
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         # TODO: 'python:3.12.4-bullseye'
@@ -57,7 +57,7 @@ jobs:
       #     docker image prune --filter label=build=-ci-${{ github.run_id }}
 
   check:
-    runs-on: xensifter
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
