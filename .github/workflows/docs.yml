@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: xensifter
+    runs-on: ubuntu-latest
     steps:
         # tmp fix for https://github.com/actions/runner/issues/434
         - name: Cleanup
