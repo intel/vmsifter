@@ -1,0 +1,26 @@
+- name: Install Ansible Galaxy dependencies
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Install required Ansible Galaxy roles
+      ansible.builtin.command: ansible-galaxy install -r requirements.yml
+      args:
+        chdir: "{{ playbook_dir }}"
+
+- name: VMSifter deployment
+  hosts: all
+  pre_tasks:
+    - name: Check for ART_ACCESS_TOKEN env var
+      set_fact:
+        art_access_token: "{{ lookup('env', 'ART_ACCESS_TOKEN') }}"
+      no_log: true
+
+    - name: Fail if ART_ACCESS_TOKEN is not set or empty
+      fail:
+        msg: "The ART_ACCESS_TOKEN environment variable is not set or is empty."
+      when: art_access_token is undefined or art_access_token | trim == ''
+
+  roles:
+    - xen
+    - vmsifter
+    - runner

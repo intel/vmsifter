@@ -1,0 +1,295 @@
+From 52e8608e646cb6e14a679d351203b344d635bfd3 Mon Sep 17 00:00:00 2001
+Message-Id: <52e8608e646cb6e14a679d351203b344d635bfd3.1701823233.git.tamas.lengyel@intel.com>
+From: Tamas K Lengyel <tamas.lengyel@intel.com>
+Date: Mon, 23 Oct 2023 11:53:51 -0400
+Subject: [PATCH 1/8] xen/x86: Make XEN_DOMCTL_get_vcpu_msrs more configurable
+
+Currently the XEN_DOMCTL_get_vcpu_msrs is only capable of gathering a handful
+of predetermined vcpu MSRs. In our use-case gathering the vPMU MSRs by an
+external privileged tool is necessary, thus we extend the domctl to allow for
+querying for any guest MSRs. To remain compatible with the existing setup if
+no specific MSR is requested via the domctl the default list is returned.
+
+Signed-off-by: Tamas K Lengyel <tamas.lengyel@intel.com>
+---
+ tools/include/xenctrl.h              |  4 +++
+ tools/libs/ctrl/xc_domain.c          | 35 ++++++++++++++++++++++++++
+ tools/libs/guest/xg_sr_save_x86_pv.c |  2 ++
+ xen/arch/x86/cpu/vpmu.c              | 10 ++++++++
+ xen/arch/x86/cpu/vpmu_amd.c          |  7 ++++++
+ xen/arch/x86/cpu/vpmu_intel.c        | 37 ++++++++++++++++++++++++++++
+ xen/arch/x86/domctl.c                | 35 +++++++++++++++++---------
+ xen/arch/x86/include/asm/vpmu.h      |  2 ++
+ 8 files changed, 120 insertions(+), 12 deletions(-)
+
+diff --git a/tools/include/xenctrl.h b/tools/include/xenctrl.h
+index 2ef8b4e054..4950afc867 100644
+--- a/tools/include/xenctrl.h
++++ b/tools/include/xenctrl.h
+@@ -858,6 +858,10 @@ int xc_vcpu_getinfo(xc_interface *xch,
+                     uint32_t vcpu,
+                     xc_vcpuinfo_t *info);
+ 
++typedef struct xen_domctl_vcpu_msr xc_vcpumsr_t;
++int xc_vcpu_get_msrs(xc_interface *xch, uint32_t domid, uint32_t vcpu,
++                     uint32_t count, xc_vcpumsr_t *msrs);
++
+ long long xc_domain_get_cpu_usage(xc_interface *xch,
+                                   uint32_t domid,
+                                   int vcpu);
+diff --git a/tools/libs/ctrl/xc_domain.c b/tools/libs/ctrl/xc_domain.c
+index 724fa6f753..4246eab8ac 100644
+--- a/tools/libs/ctrl/xc_domain.c
++++ b/tools/libs/ctrl/xc_domain.c
+@@ -2180,6 +2180,41 @@ int xc_domain_soft_reset(xc_interface *xch,
+     domctl.domain = domid;
+     return do_domctl(xch, &domctl);
+ }
++
++int xc_vcpu_get_msrs(xc_interface *xch, uint32_t domid, uint32_t vcpu,
++                     uint32_t count, xc_vcpumsr_t *msrs)
++{
++    int rc;
++    struct xen_domctl domctl = {};
++    domctl.cmd = XEN_DOMCTL_get_vcpu_msrs;
++    domctl.domain = domid;
++    domctl.u.vcpu_msrs.vcpu = vcpu;
++    domctl.u.vcpu_msrs.msr_count = count;
++
++    if ( !msrs )
++    {
++        if ( (rc = xc_domctl(xch, &domctl)) < 0 )
++            return rc;
++
++        return domctl.u.vcpu_msrs.msr_count;
++    }
++    else
++    {
++        DECLARE_HYPERCALL_BOUNCE(msrs, count * sizeof(xc_vcpumsr_t), XC_HYPERCALL_BUFFER_BOUNCE_BOTH);
++
++        if ( xc_hypercall_bounce_pre(xch, msrs) )
++            return -1;
++
++        set_xen_guest_handle(domctl.u.vcpu_msrs.msrs, msrs);
++
++        rc = do_domctl(xch, &domctl);
++
++        xc_hypercall_bounce_post(xch, msrs);
++
++        return rc;
++    }
++}
++
+ /*
+  * Local variables:
+  * mode: C
+diff --git a/tools/libs/guest/xg_sr_save_x86_pv.c b/tools/libs/guest/xg_sr_save_x86_pv.c
+index f3d7a7a71a..1da4ec7cbc 100644
+--- a/tools/libs/guest/xg_sr_save_x86_pv.c
++++ b/tools/libs/guest/xg_sr_save_x86_pv.c
+@@ -719,6 +719,8 @@ static int write_one_vcpu_msrs(struct xc_sr_context *ctx, uint32_t id)
+         goto err;
+     }
+ 
++    memset(buffer, 0, buffersz);
++
+     set_xen_guest_handle(domctl.u.vcpu_msrs.msrs, buffer);
+     if ( xc_domctl(xch, &domctl) < 0 )
+     {
+diff --git a/xen/arch/x86/cpu/vpmu.c b/xen/arch/x86/cpu/vpmu.c
+index a022126f18..8c30e33e70 100644
+--- a/xen/arch/x86/cpu/vpmu.c
++++ b/xen/arch/x86/cpu/vpmu.c
+@@ -634,6 +634,16 @@ void vpmu_dump(struct vcpu *v)
+         alternative_vcall(vpmu_ops.arch_vpmu_dump, v);
+ }
+ 
++int vpmu_get_msr(struct vcpu *v, unsigned int msr, uint64_t *val)
++{
++    ASSERT(v != current);
++
++    if ( !vpmu_is_set(vcpu_vpmu(v), VPMU_CONTEXT_ALLOCATED) )
++        return -EOPNOTSUPP;
++
++    return alternative_call(vpmu_ops.get_msr, v, msr, val);
++}
++
+ long do_xenpmu_op(
+     unsigned int op, XEN_GUEST_HANDLE_PARAM(xen_pmu_params_t) arg)
+ {
+diff --git a/xen/arch/x86/cpu/vpmu_amd.c b/xen/arch/x86/cpu/vpmu_amd.c
+index 18266b9521..3f2554102b 100644
+--- a/xen/arch/x86/cpu/vpmu_amd.c
++++ b/xen/arch/x86/cpu/vpmu_amd.c
+@@ -507,6 +507,12 @@ static int cf_check amd_vpmu_initialise(struct vcpu *v)
+     return 0;
+ }
+ 
++static int cf_check amd_get_msr(struct vcpu *v, unsigned int msr, uint64_t *val)
++{
++    /* TODO in case an external tool needs access to these MSRs */
++    return -ENOSYS;
++}
++
+ #ifdef CONFIG_MEM_SHARING
+ static int cf_check amd_allocate_context(struct vcpu *v)
+ {
+@@ -524,6 +530,7 @@ static const struct arch_vpmu_ops __initconst_cf_clobber amd_vpmu_ops = {
+     .arch_vpmu_save = amd_vpmu_save,
+     .arch_vpmu_load = amd_vpmu_load,
+     .arch_vpmu_dump = amd_vpmu_dump,
++    .get_msr = amd_get_msr,
+ 
+ #ifdef CONFIG_MEM_SHARING
+     .allocate_context = amd_allocate_context,
+diff --git a/xen/arch/x86/cpu/vpmu_intel.c b/xen/arch/x86/cpu/vpmu_intel.c
+index fa5b40c65c..1611179a71 100644
+--- a/xen/arch/x86/cpu/vpmu_intel.c
++++ b/xen/arch/x86/cpu/vpmu_intel.c
+@@ -878,6 +878,42 @@ static int cf_check core2_vpmu_initialise(struct vcpu *v)
+     return 0;
+ }
+ 
++static int cf_check core2_vpmu_get_msr(struct vcpu *v, unsigned int msr,
++                                       uint64_t *val)
++{
++    int type, index, ret = 0;
++    struct vpmu_struct *vpmu = vcpu_vpmu(v);
++    struct xen_pmu_intel_ctxt *core2_vpmu_cxt = vpmu->context;
++    uint64_t *fixed_counters = vpmu_reg_pointer(core2_vpmu_cxt, fixed_counters);
++    struct xen_pmu_cntr_pair *xen_pmu_cntr_pair =
++        vpmu_reg_pointer(core2_vpmu_cxt, arch_counters);
++
++    if ( !is_core2_vpmu_msr(msr, &type, &index) )
++        return -EINVAL;
++
++    vcpu_pause(v);
++
++    if ( msr == MSR_CORE_PERF_GLOBAL_OVF_CTRL )
++        *val = core2_vpmu_cxt->global_ovf_ctrl;
++    else if ( msr == MSR_CORE_PERF_GLOBAL_STATUS )
++        *val = core2_vpmu_cxt->global_status;
++    else if ( msr == MSR_CORE_PERF_GLOBAL_CTRL )
++        *val = core2_vpmu_cxt->global_ctrl;
++    else if ( msr >= MSR_CORE_PERF_FIXED_CTR0 &&
++              msr < MSR_CORE_PERF_FIXED_CTR0 + fixed_pmc_cnt )
++        *val = fixed_counters[msr - MSR_CORE_PERF_FIXED_CTR0];
++    else if ( msr >= MSR_P6_PERFCTR(0) && msr < MSR_P6_PERFCTR(arch_pmc_cnt) )
++        *val = xen_pmu_cntr_pair[msr - MSR_P6_PERFCTR(0)].counter;
++    else if ( msr >= MSR_P6_EVNTSEL(0) && msr < MSR_P6_EVNTSEL(arch_pmc_cnt) )
++        *val = xen_pmu_cntr_pair[msr - MSR_P6_EVNTSEL(0)].control;
++    else
++        ret = -EINVAL;
++
++    vcpu_unpause(v);
++
++    return ret;
++}
++
+ static const struct arch_vpmu_ops __initconst_cf_clobber core2_vpmu_ops = {
+     .initialise = core2_vpmu_initialise,
+     .do_wrmsr = core2_vpmu_do_wrmsr,
+@@ -887,6 +923,7 @@ static const struct arch_vpmu_ops __initconst_cf_clobber core2_vpmu_ops = {
+     .arch_vpmu_save = core2_vpmu_save,
+     .arch_vpmu_load = core2_vpmu_load,
+     .arch_vpmu_dump = core2_vpmu_dump,
++    .get_msr = core2_vpmu_get_msr,
+ 
+ #ifdef CONFIG_MEM_SHARING
+     .allocate_context = core2_vpmu_alloc_resource,
+diff --git a/xen/arch/x86/domctl.c b/xen/arch/x86/domctl.c
+index 1a8b4cff48..7a67de182d 100644
+--- a/xen/arch/x86/domctl.c
++++ b/xen/arch/x86/domctl.c
+@@ -1106,8 +1106,7 @@ long arch_do_domctl(
+             break;
+ 
+         ret = -EINVAL;
+-        if ( (v == curr) || /* no vcpu_pause() */
+-             !is_pv_domain(d) )
++        if ( v == curr )
+             break;
+ 
+         /* Count maximum number of optional msrs. */
+@@ -1129,36 +1128,48 @@ long arch_do_domctl(
+ 
+                 vcpu_pause(v);
+ 
+-                for ( j = 0; j < ARRAY_SIZE(msrs_to_send); ++j )
++                for ( j = 0; j < ARRAY_SIZE(msrs_to_send) && i < vmsrs->msr_count; ++j )
+                 {
+                     uint64_t val;
+-                    int rc = guest_rdmsr(v, msrs_to_send[j], &val);
++                    int rc;
++
++                    if ( copy_from_guest_offset(&msr, vmsrs->msrs, i, 1) )
++                    {
++                        ret = -EFAULT;
++                        break;
++                    }
++
++                    msr.index = msr.index ?: msrs_to_send[j];
++
++                    rc = guest_rdmsr(v, msr.index, &val);
+ 
+                     /*
+                      * It is the programmers responsibility to ensure that
+-                     * msrs_to_send[] contain generally-read/write MSRs.
++                     * the msr requested contain generally-read/write MSRs.
+                      * X86EMUL_EXCEPTION here implies a missing feature, and
+                      * that the guest doesn't have access to the MSR.
+                      */
+                     if ( rc == X86EMUL_EXCEPTION )
+                         continue;
++                    if ( rc == X86EMUL_UNHANDLEABLE )
++                        ret = vpmu_get_msr(v, msr.index, &val);
++                    else
++                        ret = (rc == X86EMUL_OKAY) ? 0 : -ENXIO;
+ 
+-                    if ( rc != X86EMUL_OKAY )
++                    if ( ret )
+                     {
+                         ASSERT_UNREACHABLE();
+-                        ret = -ENXIO;
+                         break;
+                     }
+ 
+                     if ( !val )
+                         continue; /* Skip empty MSRs. */
+ 
+-                    if ( i < vmsrs->msr_count && !ret )
++                    msr.value = val;
++                    if ( copy_to_guest_offset(vmsrs->msrs, i, &msr, 1) )
+                     {
+-                        msr.index = msrs_to_send[j];
+-                        msr.value = val;
+-                        if ( copy_to_guest_offset(vmsrs->msrs, i, &msr, 1) )
+-                            ret = -EFAULT;
++                        ret = -EFAULT;
++                        break;
+                     }
+                     ++i;
+                 }
+diff --git a/xen/arch/x86/include/asm/vpmu.h b/xen/arch/x86/include/asm/vpmu.h
+index b165acc6c2..8f3965082b 100644
+--- a/xen/arch/x86/include/asm/vpmu.h
++++ b/xen/arch/x86/include/asm/vpmu.h
+@@ -36,6 +36,7 @@ struct arch_vpmu_ops {
+     int (*arch_vpmu_save)(struct vcpu *v, bool_t to_guest);
+     int (*arch_vpmu_load)(struct vcpu *v, bool_t from_guest);
+     void (*arch_vpmu_dump)(const struct vcpu *);
++    int (*get_msr)(struct vcpu *v, unsigned int msr, uint64_t *val);
+ 
+ #ifdef CONFIG_MEM_SHARING
+     int (*allocate_context)(struct vcpu *v);
+@@ -106,6 +107,7 @@ void vpmu_save(struct vcpu *v);
+ void cf_check vpmu_save_force(void *arg);
+ int vpmu_load(struct vcpu *v, bool_t from_guest);
+ void vpmu_dump(struct vcpu *v);
++int vpmu_get_msr(struct vcpu *v, unsigned int msr, uint64_t *val);
+ 
+ static inline int vpmu_do_wrmsr(unsigned int msr, uint64_t msr_content)
+ {
+-- 
+2.34.1
+

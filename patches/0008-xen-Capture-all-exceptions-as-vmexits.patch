@@ -1,0 +1,32 @@
+From 17df684322d04ee660a5d3133e97dec71c85d91b Mon Sep 17 00:00:00 2001
+From: Tamas K Lengyel <tamas.lengyel@intel.com>
+Date: Wed, 13 Dec 2023 14:36:18 +0000
+Subject: [PATCH 8/8] Capture all exceptions as vmexits
+
+---
+ xen/arch/x86/hvm/vmx/vmx.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/xen/arch/x86/hvm/vmx/vmx.c b/xen/arch/x86/hvm/vmx/vmx.c
+index 2a4baac8d8..1ca488e352 100644
+--- a/xen/arch/x86/hvm/vmx/vmx.c
++++ b/xen/arch/x86/hvm/vmx/vmx.c
+@@ -4917,7 +4917,14 @@ bool vmx_vmenter_helper(const struct cpu_user_regs *regs)
+ 
+     HVMTRACE_ND(VMENTRY, 0, 1/*cycles*/);
+ 
+-    vmx_fpu_dirty_intercept();
++#ifdef CONFIG_MEM_SHARING
++    if ( mem_sharing_is_fork(currd) )
++    {
++        uint32_t bitmap = ~0;
++        vmx_fpu_dirty_intercept();
++        __vmwrite(EXCEPTION_BITMAP, bitmap);
++    }
++#endif
+ 
+     __vmwrite(GUEST_RIP,    regs->rip);
+     __vmwrite(GUEST_RSP,    regs->rsp);
+-- 
+2.34.1
+

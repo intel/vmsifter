@@ -1,0 +1,6 @@
+github_account: Wenzel
+github_owner: intel
+github_repo: vmsifter
+runner_dir: "/home/{{ lookup('env', 'USER') }}/actions-runner"
+runner_labels: ["{{ ansible_facts.product_name | replace('Client Platform', '') | trim | replace(' ', '_') }}"]
+runner_state: "started"

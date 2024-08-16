@@ -1,0 +1,69 @@
+From 4a7d09f59530a96318d12c4b5dc9a70a39368b37 Mon Sep 17 00:00:00 2001
+Message-Id: <4a7d09f59530a96318d12c4b5dc9a70a39368b37.1701904337.git.tamas.lengyel@intel.com>
+In-Reply-To: <52e8608e646cb6e14a679d351203b344d635bfd3.1701904337.git.tamas.lengyel@intel.com>
+References: <52e8608e646cb6e14a679d351203b344d635bfd3.1701904337.git.tamas.lengyel@intel.com>
+From: Your Name <you@example.com>
+Date: Tue, 5 Dec 2023 10:13:40 -0500
+Subject: [PATCH 7/8] VPID pinning
+
+---
+ xen/arch/x86/hvm/asid.c       |  4 ++++
+ xen/arch/x86/hvm/vmx/vmcs.c   |  3 ++-
+ xen/arch/x86/hvm/vmx/vmx.c    |  8 ++++++++
+ xen/arch/x86/mm/mem_sharing.c | 13 ++++---------
+ 4 files changed, 18 insertions(+), 10 deletions(-)
+
+diff --git a/xen/arch/x86/hvm/asid.c b/xen/arch/x86/hvm/asid.c
+index 0faaa24a8f..90b42233f5 100644
+--- a/xen/arch/x86/hvm/asid.c
++++ b/xen/arch/x86/hvm/asid.c
+@@ -13,6 +13,10 @@
+ #include <xen/percpu.h>
+ #include <asm/hvm/asid.h>
+ 
++#ifdef CONFIG_MEM_SHARING
++#include <asm/mem_sharing.h>
++#endif
++
+ /* Xen command-line option to enable ASIDs */
+ static bool __read_mostly opt_asid_enabled = true;
+ boolean_param("asid", opt_asid_enabled);
+diff --git a/xen/arch/x86/hvm/vmx/vmcs.c b/xen/arch/x86/hvm/vmx/vmcs.c
+index 5f587b0140..3ec714fb0d 100644
+--- a/xen/arch/x86/hvm/vmx/vmcs.c
++++ b/xen/arch/x86/hvm/vmx/vmcs.c
+@@ -1968,7 +1968,8 @@ void cf_check vmx_do_resume(void)
+          */
+         v->arch.hvm.vmx.hostenv_migrated = 1;
+ 
+-        hvm_asid_flush_vcpu(v);
++        if ( !mem_sharing_is_fork(v->domain) )
++            hvm_asid_flush_vcpu(v);
+     }
+ 
+     debug_state = v->domain->debugger_attached
+diff --git a/xen/arch/x86/hvm/vmx/vmx.c b/xen/arch/x86/hvm/vmx/vmx.c
+index 14c23e174f..e209cce7ed 100644
+--- a/xen/arch/x86/hvm/vmx/vmx.c
++++ b/xen/arch/x86/hvm/vmx/vmx.c
+@@ -4838,9 +4838,17 @@ bool vmx_vmenter_helper(const struct cpu_user_regs *regs)
+     else
+         p_asid = &curr->arch.hvm.n1asid;
+ 
++#ifdef CONFIG_MEM_SHARING
++    // We just set the VPID to be the domain ID when using forks
++    old_asid = p_asid->asid;
++    need_flush = 0;
++    new_asid = currd->domain_id;
++    p_asid->asid = new_asid;
++#else
+     old_asid = p_asid->asid;
+     need_flush = hvm_asid_handle_vmenter(p_asid);
+     new_asid = p_asid->asid;
++#endif
+ 
+     if ( unlikely(new_asid != old_asid) )
+     {
+-- 
+2.34.1
+

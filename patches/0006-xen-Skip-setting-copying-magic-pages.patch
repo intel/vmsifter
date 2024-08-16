@@ -1,0 +1,70 @@
+From d1980db5923263e33d45d97ebb6ccc3eec92df4b Mon Sep 17 00:00:00 2001
+Message-Id: <d1980db5923263e33d45d97ebb6ccc3eec92df4b.1701823233.git.tamas.lengyel@intel.com>
+In-Reply-To: <52e8608e646cb6e14a679d351203b344d635bfd3.1701823233.git.tamas.lengyel@intel.com>
+References: <52e8608e646cb6e14a679d351203b344d635bfd3.1701823233.git.tamas.lengyel@intel.com>
+From: Tamas K Lengyel <tamas.lengyel@intel.com>
+Date: Wed, 25 Oct 2023 10:46:21 -0700
+Subject: [PATCH 6/8] Skip setting/copying magic pages
+
+---
+ xen/arch/x86/hvm/vmx/vmx.c    | 2 ++
+ xen/arch/x86/mm/mem_sharing.c | 5 ++++-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/xen/arch/x86/hvm/vmx/vmx.c b/xen/arch/x86/hvm/vmx/vmx.c
+index 85fe19798b..14c23e174f 100644
+--- a/xen/arch/x86/hvm/vmx/vmx.c
++++ b/xen/arch/x86/hvm/vmx/vmx.c
+@@ -589,6 +589,7 @@ static void cf_check vmx_domain_relinquish_resources(struct domain *d)
+ 
+ static void cf_check domain_creation_finished(struct domain *d)
+ {
++#if 0
+     gfn_t gfn = gaddr_to_gfn(APIC_DEFAULT_PHYS_BASE);
+     mfn_t apic_access_mfn = d->arch.hvm.vmx.apic_access_mfn;
+     bool ipat;
+@@ -602,6 +603,7 @@ static void cf_check domain_creation_finished(struct domain *d)
+ 
+     if ( set_mmio_p2m_entry(d, gfn, apic_access_mfn, PAGE_ORDER_4K) )
+         domain_crash(d);
++#endif
+ }
+ 
+ static void vmx_init_ipt(struct vcpu *v)
+diff --git a/xen/arch/x86/mm/mem_sharing.c b/xen/arch/x86/mm/mem_sharing.c
+index 94b6b782ef..6e088a4dae 100644
+--- a/xen/arch/x86/mm/mem_sharing.c
++++ b/xen/arch/x86/mm/mem_sharing.c
+@@ -1767,6 +1767,7 @@ static int fork_hap_allocation(struct domain *cd, struct domain *d)
+ 
+ static void copy_tsc(struct domain *cd, struct domain *d)
+ {
++#if 0
+     uint32_t tsc_mode;
+     uint32_t gtsc_khz;
+     uint32_t incarnation;
+@@ -1775,10 +1776,12 @@ static void copy_tsc(struct domain *cd, struct domain *d)
+     tsc_get_info(d, &tsc_mode, &elapsed_nsec, &gtsc_khz, &incarnation);
+     /* Don't bump incarnation on set */
+     tsc_set_info(cd, tsc_mode, elapsed_nsec, gtsc_khz, incarnation - 1);
++#endif
+ }
+ 
+ static int copy_special_pages(struct domain *cd, struct domain *d)
+ {
++#if 0
+     mfn_t new_mfn, old_mfn;
+     gfn_t new_gfn, old_gfn;
+     struct p2m_domain *p2m = p2m_get_hostp2m(cd);
+@@ -1849,7 +1852,7 @@ static int copy_special_pages(struct domain *cd, struct domain *d)
+                 return rc;
+         }
+     }
+-
++#endif
+     return 0;
+ }
+ 
+-- 
+2.34.1
+

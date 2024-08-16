@@ -1,0 +1,43 @@
+jobs = 1
+refresh_frequency = 10000
+socket_name = "xensifter_sock"
+insn_buf_size = 15
+min_prefix_count = 0
+max_prefix_count = 0
+debug = false
+# post-mortem debugging with Python PDB
+pdb = false
+csv_log_diff_only = 0
+extra_byte = 0
+# PCPU allocation settings
+smt = false
+# display
+completion_rate_precision = 4
+
+[fuzzer.drizzler]
+num_seeds = 1
+injections = 300
+aggressive = false
+
+[x86]
+prefix = [
+    0xF0,  # lock
+    0xF2,  # repne / bound
+    0xF3,  # rep
+    0x2E,  # cs / branch taken
+    0x36,  # ss / branch not taken
+    0x3E,  # ds
+    0x26,  # es
+    0x64,  # fs
+    0x65,  # gs
+    0x66,  # data
+    0x67,  # addr
+]
+exec_mode = "32"
+
+[injector.xenvm]
+xtf_path = "./xtf"
+perfcts = "0x043010e,0x04301c2,0x04307c1,0x44304a3"
+sse = true
+syscall = true
+fpu_emulation = false

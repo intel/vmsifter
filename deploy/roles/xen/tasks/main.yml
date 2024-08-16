@@ -1,0 +1,73 @@
+- name: Ensure Xen kernel
+  ansible.builtin.command: xl info
+  become: true
+  register: xen_info
+  failed_when: false
+
+- name: Setup Xen
+  when: xen_info.rc != 0
+  block:
+  - name: Upload Xen deb artifact
+    ansible.builtin.copy:
+      src: "files/xen-upstream-4.18.0.deb"
+      dest: /tmp/xen.deb
+
+  - name: Install deb package
+    ansible.builtin.apt:
+      deb: "/tmp/xen.deb"
+    become: true
+
+  - name: Enable systemd services
+    ansible.builtin.systemd:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+    become: true
+    loop:
+      - xen-qemu-dom0-disk-backend.service
+      - xen-init-dom0.service
+      - xenconsoled.service
+
+  - name: libyajl missing
+    ansible.builtin.apt:
+      name: libyajl-dev
+      state: present
+      update_cache: yes
+    become: true
+
+  - name: Generate GRUB config
+    ansible.builtin.command: update-grub
+    become: true
+
+  - name: Count Xen GRUB menuentry
+    ansible.builtin.shell: grep -E '^(menuentry|submenu)' /boot/grub/grub.cfg | grep -n Xen -m 1 | awk '-F:' '{print $1}'
+    register: xen_menuentry_count
+    become: true
+
+  - name: Update GRUB DEFAULT
+    ansible.builtin.lineinfile:
+      path: /etc/default/grub
+      regexp: '^GRUB_DEFAULT='
+      line: 'GRUB_DEFAULT={{ (xen_menuentry_count.stdout | int) - 1 }}'
+    become: true
+
+  - name: Update GRUB CMDLINE DEFAULT XEN
+    ansible.builtin.lineinfile:
+      path: /etc/default/grub
+      regexp: '^GRUB_CMDLINE_XEN_DEFAULT='
+      line: 'GRUB_CMDLINE_XEN_DEFAULT="console=vga dom0_mem=4096M hpet=legacy-replacement dom0_max_vcpus=8 dom0_vcpus_pin=1 ept=ad=0 iommu=no-sharept spec-ctrl=0 altp2m=1 xpti=0 loglvl=all guest_loglvl=all smt=0 vpmu=bts apicv=0 \"cpufreq=hwp:hdc=0;xen:performance,verbose\""'
+    become: true
+
+  - name: Generate GRUB config
+    ansible.builtin.command: update-grub
+    become: true
+
+  - name: Reboot on Xen
+    ansible.builtin.reboot:
+    become: true
+
+  - name: Ensure Xen kernel
+    ansible.builtin.command: xl info
+    become: true
+    register: xen_info
+    failed_when: xen_info.rc != 0

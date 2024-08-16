@@ -1,0 +1,17 @@
+version: 1
+disable_existing_loggers: false
+# log format will be setup by coloredlogs
+formatters:
+  colored:
+    # from coloredlogs import DEFAULT_LOG_FORMAT
+    # and remove the [%(process)d] field
+    format: '%(asctime)s %(name)s %(levelname)s %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: NOTSET
+    stream: ext://sys.stderr
+root:
+  level: INFO
+  handlers: [console]
+  formatter: colored

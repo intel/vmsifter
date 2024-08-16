@@ -1,0 +1,124 @@
+name: Xen
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'patches/**'
+      - '.gitmodules'
+    tags:
+      - 'v*'
+  pull_request:
+    paths:
+      - 'patches/**'
+      - '.gitmodules'
+
+jobs:
+  xen_deb:
+    runs-on: xensifter
+    container:
+      image: ubuntu:22.04
+    steps:
+      - name: Ensure cleanup
+        run: find . -mindepth 1 -delete
+
+      - name: Ensure git
+        run: |
+          apt-get update
+          apt-get install -y git
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+
+      - uses: actions/checkout@v4
+        with:
+          clean: true
+
+      - name: add safe directory
+        run: |
+          git config --global --add safe.directory $GITHUB_WORKSPACE
+          git config --global --add safe.directory $GITHUB_WORKSPACE/libvmi
+          git config --global --add safe.directory $GITHUB_WORKSPACE/xen
+          git config --global --add safe.directory $GITHUB_WORKSPACE/xtf
+
+        # actions/checkout submodules doesn't work
+        # missing xen/.git
+      - name: init submodules
+        run: |
+          git submodule update --init --recursive
+
+      - name: Install deps
+        run: >
+          apt-get install -y iasl libyajl-dev libsystemd-dev
+          ninja-build build-essential uuid-dev libncurses-dev
+          pkg-config libglib2.0-dev libpixman-1-dev flex bison
+          python3 python3-dev
+        env:
+          DEBIAN_FRONTEND: noninteractive
+
+        # note: find with -exec only fails if directory traversal fails
+        # so use -print0 + sort + xargs
+      - name: Apply patches
+        run: find ../patches/ -type f -name '*-xen-*' -print0 | sort -z | xargs -0 git am
+        working-directory: xen
+
+      - name: Apply our config
+        run: |
+          echo CONFIG_EXPERT=y > xen/.config
+          echo CONFIG_MEM_SHARING=y >> xen/.config
+        working-directory: xen
+
+      - run: make -C xen olddefconfig
+        working-directory: xen
+
+      - name: Configure
+        run: >
+          ./configure
+          --enable-systemd --disable-docs
+          --disable-stubdom --disable-pvshim --enable-githttp
+        working-directory: xen
+
+      - name: Build Debian package
+        run: make -j$(nproc) debball
+        working-directory: xen
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xen-deb
+          path: xen/dist/xen-upstream-*.deb
+
+      # always cleanup otherwise GITHUB_WORKSPACE will be left polluted by files owned as root:root
+      - name: Ensure cleanup
+        run: |
+          find . -mindepth 1 -delete
+          chown 1002:1002 $GITHUB_WORKSPACE/../*
+        if: always()
+
+  release:
+    permissions:
+      contents: write
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: xen_deb
+    runs-on: xensifter
+    container:
+      image: ubuntu:22.04
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Get the version
+        id: get_version
+        run: echo "version=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: xen-deb
+
+      - name: Create release
+        uses: 'softprops/action-gh-release@69320dbe05506a9a39fc8ae11030b214ec2d1f87'
+        with:
+          files: '*.deb'
+          generate_release_notes: true
+          tag_name: ${{ steps.get_version.outputs.version }}
+

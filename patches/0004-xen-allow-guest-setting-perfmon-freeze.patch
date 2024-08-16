@@ -1,0 +1,43 @@
+From d8433e0ef9fd770440726204573506a0507ee4a3 Mon Sep 17 00:00:00 2001
+Message-Id: <d8433e0ef9fd770440726204573506a0507ee4a3.1701823233.git.tamas.lengyel@intel.com>
+In-Reply-To: <52e8608e646cb6e14a679d351203b344d635bfd3.1701823233.git.tamas.lengyel@intel.com>
+References: <52e8608e646cb6e14a679d351203b344d635bfd3.1701823233.git.tamas.lengyel@intel.com>
+From: Your Name <you@example.com>
+Date: Tue, 24 Oct 2023 14:15:51 -0700
+Subject: [PATCH 4/8] Allow guest setting perfmon freeze settings
+
+---
+ xen/arch/x86/hvm/vmx/vmx.c           | 3 ++-
+ xen/arch/x86/include/asm/msr-index.h | 2 ++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/xen/arch/x86/hvm/vmx/vmx.c b/xen/arch/x86/hvm/vmx/vmx.c
+index 8be92c346d..85fe19798b 100644
+--- a/xen/arch/x86/hvm/vmx/vmx.c
++++ b/xen/arch/x86/hvm/vmx/vmx.c
+@@ -3607,7 +3607,8 @@ static int cf_check vmx_msr_write_intercept(
+         break;
+ 
+     case MSR_IA32_DEBUGCTLMSR:
+-        rsvd = ~(IA32_DEBUGCTLMSR_LBR | IA32_DEBUGCTLMSR_BTF);
++        rsvd = ~(IA32_DEBUGCTLMSR_LBR | IA32_DEBUGCTLMSR_BTF |
++                 IA32_DEBUGCTLMSR_FREEZE_ON_PMI | IA32_DEBUGCTLMSR_FREEZE_WHILE_SMM);
+ 
+         /* TODO: Wire vPMU settings properly through the CPUID policy */
+         if ( vpmu_is_set(vcpu_vpmu(v), VPMU_CPU_HAS_BTS) )
+diff --git a/xen/arch/x86/include/asm/msr-index.h b/xen/arch/x86/include/asm/msr-index.h
+index 82a81bd0a2..fa4508c052 100644
+--- a/xen/arch/x86/include/asm/msr-index.h
++++ b/xen/arch/x86/include/asm/msr-index.h
+@@ -295,6 +295,8 @@
+ #define IA32_DEBUGCTLMSR_BTINT		(1<<8) /* Branch Trace Interrupt */
+ #define IA32_DEBUGCTLMSR_BTS_OFF_OS	(1<<9)  /* BTS off if CPL 0 */
+ #define IA32_DEBUGCTLMSR_BTS_OFF_USR	(1<<10) /* BTS off if CPL > 0 */
++#define IA32_DEBUGCTLMSR_FREEZE_ON_PMI (1<<12) /* Perfmon stops on PMI */
++#define IA32_DEBUGCTLMSR_FREEZE_WHILE_SMM (1<<14) /* Perfmon stops while in SMM */
+ #define IA32_DEBUGCTLMSR_RTM		(1<<15) /* RTM debugging enable */
+ 
+ #define MSR_IA32_LASTBRANCHFROMIP	0x000001db
+-- 
+2.34.1
+
