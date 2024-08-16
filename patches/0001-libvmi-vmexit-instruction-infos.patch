@@ -1,0 +1,68 @@
+From 4b020d6e27cb18a9ee06685ef9d3e5181b0e08f6 Mon Sep 17 00:00:00 2001
+From: Tamas K Lengyel <tamas.lengyel@intel.com>
+Date: Tue, 23 May 2023 13:01:53 +0000
+Subject: [PATCH] VMexit instruction infos
+
+---
+ libvmi/driver/xen/xen_events.c     | 7 +++++++
+ libvmi/driver/xen/xen_events_abi.h | 7 +++++++
+ libvmi/events.h                    | 7 +++++++
+ 3 files changed, 21 insertions(+)
+
+diff --git a/libvmi/driver/xen/xen_events.c b/libvmi/driver/xen/xen_events.c
+index 6a02b07..45c63de 100644
+--- a/libvmi/driver/xen/xen_events.c
++++ b/libvmi/driver/xen/xen_events.c
+@@ -1117,6 +1117,13 @@ status_t process_vmexit(vmi_instance_t vmi, vm_event_compat_t *vmec)
+ 
+     event->vmexit_event.reason = vmec->vmexit.arch.vmx.reason;
+     event->vmexit_event.qualification = vmec->vmexit.arch.vmx.qualification;
++    event->vmexit_event.gla = vmec->vmexit.arch.vmx.gla;
++    event->vmexit_event.interruption_info = vmec->vmexit.arch.vmx.interruption_info;
++    event->vmexit_event.interruption_error = vmec->vmexit.arch.vmx.interruption_error;
++    event->vmexit_event.idt_vectoring_info = vmec->vmexit.arch.vmx.idt_vectoring_info;
++    event->vmexit_event.idt_vectoring_error = vmec->vmexit.arch.vmx.idt_vectoring_error;
++    event->vmexit_event.instruction_length = vmec->vmexit.arch.vmx.instruction_length;
++    event->vmexit_event.instruction_info = vmec->vmexit.arch.vmx.instruction_info;
+ 
+     event->x86_regs = &vmec->data.regs.x86;
+     event->slat_id = vmec->altp2m_idx;
+diff --git a/libvmi/driver/xen/xen_events_abi.h b/libvmi/driver/xen/xen_events_abi.h
+index 81f8d2e..1b9888e 100644
+--- a/libvmi/driver/xen/xen_events_abi.h
++++ b/libvmi/driver/xen/xen_events_abi.h
+@@ -491,6 +491,13 @@ struct vm_event_vmexit {
+         struct {
+             uint64_t reason;
+             uint64_t qualification;
++            uint64_t gla;
++            uint32_t interruption_info;
++            uint32_t interruption_error;
++            uint32_t idt_vectoring_info;
++            uint32_t idt_vectoring_error;
++            uint32_t instruction_length;
++            uint32_t instruction_info;
+         } vmx;
+     } arch;
+ };
+diff --git a/libvmi/events.h b/libvmi/events.h
+index d3166d7..c63bfee 100644
+--- a/libvmi/events.h
++++ b/libvmi/events.h
+@@ -435,6 +435,13 @@ typedef struct vmexit_event {
+     uint8_t sync;           /* IN */
+     uint64_t reason;        /* OUT */
+     uint64_t qualification; /* OUT */
++    uint64_t gla;           /* OUT */
++    uint32_t interruption_info;     /* OUT */
++    uint32_t interruption_error;    /* OUT */
++    uint32_t idt_vectoring_info;    /* OUT */
++    uint32_t idt_vectoring_error;   /* OUT */
++    uint32_t instruction_length;    /* OUT */
++    uint32_t instruction_info;      /* OUT */
+ } vmexit_event_t;
+ 
+ struct vmi_event;
+-- 
+2.34.1
+

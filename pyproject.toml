@@ -1,0 +1,112 @@
+[tool.poetry]
+name = "xensifter"
+version = "0.1.0"
+description = "x86 instruction fuzzer based on Xen VMI"
+authors = [
+  "Tamas K Lengyel <tamas.lengyel@intel.com>",
+  "Mathieu Tarral <mathieu.tarral@intel.com>",
+  "Rowan Hart <rowan.hart@intel.com>",
+]
+
+[tool.poetry.dependencies]
+python = "^3.8.1"
+coloredlogs = "^15.0.1"
+PyYAML = "^6.0"
+docopt = "^0.6.2"
+dynaconf = "3.2.5"
+types-PyYAML = "^6.0.8"
+attrs = "^23.1.0"
+keystone-engine = "^0.9.2"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "24.4.2"
+poethepoet = "^0.18.1"
+flake8 = "^6.0.0"
+isort = "^5.10.1"
+pytest = "^7.2.1"
+more-itertools = "^8.12.0"
+mypy = "^1.0.1"
+flake8-pyproject = "^1.2.2"
+pdbpp = "^0.10.3"
+ipdb = "^0.13.11"
+
+
+[tool.poetry.group.deploy.dependencies]
+ansible = "^6.7.0"
+
+[tool.poetry.scripts]
+xensifter = 'xensifter.__main__:main'
+
+[tool.poe.tasks]
+format = { shell = "black . && isort ." }
+lint = "flake8 --show-source --statistics"
+typing = "mypy -p xensifter"
+ccode = { shell = "poe format && poe lint" }
+pytest = "pytest --pdb --pdbcls=IPython.terminal.debugger:Pdb --verbose"
+bench_test = """
+    # durations=0 shows execution time for each test
+    pytest
+        --verbose
+        --durations=0
+        tests/bench
+"""
+unit_test = "pytest --pdb --pdbcls=IPython.terminal.debugger:Pdb --verbose -x tests/unit"
+# CI
+format_check = { shell = "black . --check && isort . --check" }
+
+[tool.poe.tasks.deploy]
+cmd = "ansible-playbook -i inventory.yml site.yml"
+cwd = "deploy"
+
+
+
+# tools configuration
+[tool.black]
+line-length = 120
+exclude = '''
+/(
+  | \.mypy_cache
+  | xen
+  | xtf
+  | libvmi
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip = ["xen/", "xtf/", "libvmi/"]
+
+[tool.flake8]
+max-line-length = 120
+exclude = ["xen/", "xtf/", "libvmi/", "tests/", "scripts/", "docs/"]
+# https://black.readthedocs.io/en/stable/faq.html#why-are-flake8-s-e203-and-w503-violated
+ignore = ["E203", "W503"]
+
+[tool.mypy]
+warn_unreachable = true
+# TODO: warn_return_any = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+show_error_context = true
+show_column_numbers = true
+show_error_codes = true
+pretty = true
+check_untyped_defs = true
+# exclude Drizzler
+exclude = [
+    'drizzler.py',
+    'csv.py',
+]
+
+[tool.pytest.ini_options]
+norecursedirs = ["xen/*"]
+
+[[tool.mypy.overrides]]
+module = ["dynaconf.*", "coloredlogs.*", "docopt.*"]
+ignore_missing_imports = true
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

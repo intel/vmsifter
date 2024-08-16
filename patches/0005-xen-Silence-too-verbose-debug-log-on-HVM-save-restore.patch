@@ -1,0 +1,52 @@
+From b113580958a00d5a30309b3a12c45428656597ad Mon Sep 17 00:00:00 2001
+Message-Id: <b113580958a00d5a30309b3a12c45428656597ad.1701823233.git.tamas.lengyel@intel.com>
+In-Reply-To: <52e8608e646cb6e14a679d351203b344d635bfd3.1701823233.git.tamas.lengyel@intel.com>
+References: <52e8608e646cb6e14a679d351203b344d635bfd3.1701823233.git.tamas.lengyel@intel.com>
+From: Tamas K Lengyel <tamas.lengyel@intel.com>
+Date: Wed, 18 Oct 2023 14:57:45 +0000
+Subject: [PATCH 5/8] Silence too verbose debug log on HVM save/restore
+
+---
+ xen/arch/x86/hvm/save.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/xen/arch/x86/hvm/save.c b/xen/arch/x86/hvm/save.c
+index 79713cd6ca..d28d1d4cf9 100644
+--- a/xen/arch/x86/hvm/save.c
++++ b/xen/arch/x86/hvm/save.c
+@@ -234,8 +234,8 @@ int hvm_save(struct domain *d, hvm_domain_context_t *h)
+ 
+             for_each_vcpu ( d, v )
+             {
+-                printk(XENLOG_G_INFO "HVM %pv save: %s\n",
+-                       v, hvm_sr_handlers[i].name);
++                //printk(XENLOG_G_INFO "HVM %pv save: %s\n",
++                //       v, hvm_sr_handlers[i].name);
+                 if ( handler(v, h) != 0 )
+                 {
+                     printk(XENLOG_G_ERR
+@@ -248,8 +248,8 @@ int hvm_save(struct domain *d, hvm_domain_context_t *h)
+         }
+         else
+         {
+-            printk(XENLOG_G_INFO "HVM d%d save: %s\n",
+-                   d->domain_id, hvm_sr_handlers[i].name);
++            //printk(XENLOG_G_INFO "HVM d%d save: %s\n",
++            //       d->domain_id, hvm_sr_handlers[i].name);
+             if ( handler(d->vcpu[0], h) != 0 )
+             {
+                 printk(XENLOG_G_ERR
+@@ -325,8 +325,8 @@ int hvm_load(struct domain *d, hvm_domain_context_t *h)
+         }
+ 
+         /* Load the entry */
+-        printk(XENLOG_G_INFO "HVM%d restore: %s %"PRIu16"\n", d->domain_id,
+-               hvm_sr_handlers[desc->typecode].name, desc->instance);
++        //printk(XENLOG_G_INFO "HVM%d restore: %s %"PRIu16"\n", d->domain_id,
++        //       hvm_sr_handlers[desc->typecode].name, desc->instance);
+         rc = handler(d, h);
+         if ( rc )
+         {
+-- 
+2.34.1
+

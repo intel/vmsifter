@@ -1,0 +1,199 @@
+From 1ab8d92a4beba5a0223885fcf68aefed0f7f39d2 Mon Sep 17 00:00:00 2001
+From: Tamas K Lengyel <tamas.lengyel@intel.com>
+Date: Thu, 1 Jun 2023 17:18:07 +0000
+Subject: [PATCH] Xensifter
+
+---
+ arch/x86/include/arch/cpuid.h     |   1 +
+ arch/x86/include/arch/msr-index.h |   4 +
+ tests/xensifter/Makefile          |  10 +++
+ tests/xensifter/extra.cfg.in      |   1 +
+ tests/xensifter/main.c            | 124 ++++++++++++++++++++++++++++++
+ 5 files changed, 140 insertions(+)
+ create mode 100644 tests/xensifter/Makefile
+ create mode 100644 tests/xensifter/extra.cfg.in
+ create mode 100644 tests/xensifter/main.c
+
+diff --git a/arch/x86/include/arch/cpuid.h b/arch/x86/include/arch/cpuid.h
+index e6d6a8c..c3e55bc 100644
+--- a/arch/x86/include/arch/cpuid.h
++++ b/arch/x86/include/arch/cpuid.h
+@@ -82,6 +82,7 @@ static inline bool cpu_has(unsigned int feature)
+ #define cpu_has_avx             cpu_has(X86_FEATURE_AVX)
+ 
+ #define cpu_has_syscall         cpu_has(X86_FEATURE_SYSCALL)
++#define cpu_has_sep             cpu_has(X86_FEATURE_SEP)
+ #define cpu_has_nx              cpu_has(X86_FEATURE_NX)
+ #define cpu_has_page1gb         cpu_has(X86_FEATURE_PAGE1GB)
+ #define cpu_has_lm              cpu_has(X86_FEATURE_LM)
+diff --git a/arch/x86/include/arch/msr-index.h b/arch/x86/include/arch/msr-index.h
+index be7ba0d..e66acfe 100644
+--- a/arch/x86/include/arch/msr-index.h
++++ b/arch/x86/include/arch/msr-index.h
+@@ -23,6 +23,10 @@
+ #define MSR_INTEL_MISC_FEATURES_ENABLES 0x00000140
+ #define MISC_FEATURES_CPUID_FAULTING    (_AC(1, ULL) <<  0)
+ 
++#define MSR_SYSENTER_CS                 0x00000174
++#define MSR_SYSENTER_ESP                0x00000175
++#define MSR_SYSENTER_EIP                0x00000176
++
+ #define MSR_PERFEVTSEL(n)              (0x00000186 + (n))
+ 
+ #define MSR_MISC_ENABLE                 0x000001a0
+diff --git a/tests/xensifter/Makefile b/tests/xensifter/Makefile
+new file mode 100644
+index 0000000..2bf501b
+--- /dev/null
++++ b/tests/xensifter/Makefile
+@@ -0,0 +1,10 @@
++include $(ROOT)/build/common.mk
++
++NAME      := xensifter
++CATEGORY  := utility
++TEST-ENVS := hvm32 hvm32pae hvm32pse hvm64
++TEST-EXTRA-CFG := extra.cfg.in
++
++obj-perenv += main.o
++
++include $(ROOT)/build/gen.mk
+diff --git a/tests/xensifter/extra.cfg.in b/tests/xensifter/extra.cfg.in
+new file mode 100644
+index 0000000..c7629a1
+--- /dev/null
++++ b/tests/xensifter/extra.cfg.in
+@@ -0,0 +1 @@
++shadow_memory=128
+diff --git a/tests/xensifter/main.c b/tests/xensifter/main.c
+new file mode 100644
+index 0000000..ceb6c2d
+--- /dev/null
++++ b/tests/xensifter/main.c
+@@ -0,0 +1,124 @@
++/**
++ * @file tests/xensifter/main.c
++ * @ref xensifter Test VM to be used with XenSifter
++ *
++ * @page xensfiter
++ *
++ */
++#include <xtf.h>
++
++const char test_title[] = "xensifter";
++
++void test_main(void)
++{
++    unsigned int i;
++    uint32_t eax, ebx, ecx, edx;
++    uint32_t count;
++
++    printk("Starting xensifter\n");
++
++    // Turn on SSE and AVX instructions
++    cpuid_count(0x13371337, 2, &eax, &ebx, &ecx, &edx);
++    if ( eax )
++    {
++        printk("Setting up SSE & AVX\n");
++        write_cr4(read_cr4() | X86_CR4_OSFXSR | X86_CR4_OSXSAVE | X86_CR4_OSXMMEXCPT);
++        write_xcr0(read_xcr0() | XSTATE_SSE | XSTATE_YMM);
++    }
++
++    // Enable syscalls
++    cpuid_count(0x13371337, 3, &eax, &ebx, &ecx, &edx);
++    if ( eax )
++    {
++        printk("Setting up syscall\n");
++        wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_SCE);
++
++        /* Lay out the GDT suitably for SYSCALL/SYSRET. */
++        gdt[GDTE_AVAIL0] = gdt[__KERN_CS >> 3]; /* SYSCALL %cs/%ss selectors */
++        gdt[GDTE_AVAIL1] = gdt[GDTE_DS32_DPL0];
++        gdt[GDTE_AVAIL2] = gdt[GDTE_CS32_DPL3]; /* SYSRET  %cs/%ss selectors */
++        gdt[GDTE_AVAIL3] = gdt[GDTE_DS32_DPL3];
++        gdt[GDTE_AVAIL4] = gdt[GDTE_CS64_DPL3];
++
++        wrmsr(MSR_STAR, (_u(0xbeef11) |
++                         (((uint64_t)GDTE_AVAIL0 * 8 + 0) << 32) |
++                         (((uint64_t)GDTE_AVAIL2 * 8 + 3) << 48)));
++        wrmsr(MSR_CSTAR, _u(0xbeef12));
++        wrmsr(MSR_LSTAR, _u(0xbeef13));
++
++        // Enable sysenter
++        wrmsr(MSR_SYSENTER_CS, __KERN_CS);
++        wrmsr(MSR_SYSENTER_EIP, 0xbeef14);
++    }
++
++    cpuid_count(0x13371337, 4, &eax, &ebx, &ecx, &edx);
++    if ( eax )
++    {
++        printk("Setting up FPU Emulation\n");
++        write_cr0(read_cr0() | X86_CR0_EM);
++    }
++
++    // IA32_DEBUGCTL, freeze on SMM and pmi
++    wrmsr(0x1d9, 0x5000);
++    // IA32_PERF_GLOBAL_CTRL (Figure 18-3).
++    wrmsr(0x38f, 0x70000000f);
++    // IA32_FIXED_CTR_CTRL Figure (Figure 20-43).
++    // Enable all fixed counters with no PMI
++    wrmsr(0x38d, 0x333);
++
++    cpuid_count(0x13371337, 1, &eax, &ebx, &ecx, &edx);
++    if ( eax )
++    {
++        printk("Configuring perf counters 0x%x 0x%x 0x%x 0x%x\n", eax, ebx, ecx, edx);
++
++        // SDM 18.2.1
++        // https://perfmon-events.intel.com
++        // 24-31b: CMASK
++        // 22b: Enable
++        // 17b: OS
++        // 16b: USR
++        // 8-15b: UMASK
++        // 0-7b: Event select
++        wrmsr(0x186, eax);
++        wrmsr(0x187, ebx);
++        wrmsr(0x188, ecx);
++        wrmsr(0x189, edx);
++    }
++
++    printk("Issuing final CPUID\n");
++
++    cpuid_count(0x13371337, 0, &eax, &ebx, &ecx, &edx);
++
++    // Execution will be hijacked from here when XenSifter is active.
++    for (i=0;i<10;i++)
++        eax += eax + i;
++
++    count = rdmsr(0x309);
++    printk("Fixed perf counter: %u\n", count);
++    count = rdmsr(0x30a);
++    printk("Fixed perf counter: %u\n", count);
++    count = rdmsr(0x30b);
++    printk("Fixed perf counter: %u\n", count);
++    count = rdmsr(0xc1);
++    printk("Perf counter: %u\n", count);
++    count = rdmsr(0xc2);
++    printk("Perf counter: %u\n", count);
++    count = rdmsr(0xc3);
++    printk("Perf counter: %u\n", count);
++    count = rdmsr(0xc4);
++    printk("Perf counter: %u\n", count);
++
++    printk("Dummy calculation done: %u\n", eax);
++
++    xtf_success(NULL);
++}
++
++/*
++ * Local variables:
++ * mode: C
++ * c-file-style: "BSD"
++ * c-basic-offset: 4
++ * tab-width: 4
++ * indent-tabs-mode: nil
++ * End:
++ */
+-- 
+2.34.1
+

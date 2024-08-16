@@ -1,0 +1,55 @@
+name: Campaign
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    # 2 weeks
+    # doesn't work: new timeout restriction to 5d (April 2024)
+    timeout-minutes: 40320
+    strategy:
+      max-parallel: 10
+      fail-fast: false
+      matrix:
+        runner: []
+        jobs: [8]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Assign docker name
+        run: |
+          echo "DOCKER_NAME=campaign-vmsifter-${{ matrix.runner }}" >> $GITHUB_ENV
+          echo "WORKDIR=/mnt/storage/workdir" >> $GITHUB_ENV
+          echo "EXEC_MODE=32" >> $GITHUB_ENV
+
+      - name: remove any existing vmsifter running container
+        run: docker rm -f ${{ env.DOCKER_NAME }} || true
+
+      - name: set env file
+        run: |
+          echo "XENSIFTER_X86.EXEC_MODE=${{ env.EXEC_MODE }}" > .env
+
+      - name: run.sh
+        run: |
+          rm -rf ${{ env.WORKDIR }}
+          ./run.sh -u false -i intel/vmsifter:latest -t false -n ${{ env.DOCKER_NAME }} -w ${{ env.WORKDIR }} -- -j ${{ matrix.jobs }}
+          du -h ${{ env.WORKDIR }}
+
+      - name: remove any existing vmsifter running container
+        run: docker rm -f ${{ env.DOCKER_NAME }} || true
+        if: always()
+
+      - name: remove xensifter socket
+        run: rm -f ${{ env.WORKDIR }}/xensifter_sock
+        if: always()
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.runner }}
+          path: ${{ env.WORKDIR }}/*
+          compression-level: 9
+        if: always()

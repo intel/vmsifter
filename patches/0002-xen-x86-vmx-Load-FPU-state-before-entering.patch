@@ -1,0 +1,33 @@
+From 09a5961943aa8322d952f74066640063e071c5fc Mon Sep 17 00:00:00 2001
+Message-Id: <09a5961943aa8322d952f74066640063e071c5fc.1701823233.git.tamas.lengyel@intel.com>
+In-Reply-To: <52e8608e646cb6e14a679d351203b344d635bfd3.1701823233.git.tamas.lengyel@intel.com>
+References: <52e8608e646cb6e14a679d351203b344d635bfd3.1701823233.git.tamas.lengyel@intel.com>
+From: Tamas K Lengyel <tamas.lengyel@intel.com>
+Date: Thu, 11 May 2023 16:43:04 +0000
+Subject: [PATCH 2/8] x86/vmx: Load FPU state before entering
+
+When a vCPU gets scheduled the FPU is not loaded until something
+traps to Xen indicating the guest wants to use the FPU. This is a
+scheduling optimization we want to disable while sifting.
+
+Signed-off-by: Tamas K Lengyel <tamas.lengyel@intel.com>
+---
+ xen/arch/x86/hvm/vmx/vmx.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xen/arch/x86/hvm/vmx/vmx.c b/xen/arch/x86/hvm/vmx/vmx.c
+index 1edc7f1e91..5cc9a3876d 100644
+--- a/xen/arch/x86/hvm/vmx/vmx.c
++++ b/xen/arch/x86/hvm/vmx/vmx.c
+@@ -4883,6 +4883,8 @@ bool vmx_vmenter_helper(const struct cpu_user_regs *regs)
+ 
+     HVMTRACE_ND(VMENTRY, 0, 1/*cycles*/);
+ 
++    vmx_fpu_dirty_intercept();
++
+     __vmwrite(GUEST_RIP,    regs->rip);
+     __vmwrite(GUEST_RSP,    regs->rsp);
+     __vmwrite(GUEST_RFLAGS, regs->rflags | X86_EFLAGS_MBS);
+-- 
+2.34.1
+

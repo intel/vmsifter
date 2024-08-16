@@ -1,0 +1,15 @@
+[submodule "libvmi"]
+	path = libvmi
+	url = https://github.com/libvmi/libvmi
+	ignore = dirty
+	shallow = true
+[submodule "xen"]
+	path = xen
+	url = https://github.com/xen-project/xen
+	ignore = dirty
+	shallow = true
+[submodule "xtf"]
+	path = xtf
+	url = https://github.com/andyhhp/xtf
+	ignore = dirty
+	shallow = true

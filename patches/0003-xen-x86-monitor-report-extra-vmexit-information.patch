@@ -1,0 +1,150 @@
+From 0a0747c3b7f669be11a5231d3ade214a4d0fe5b7 Mon Sep 17 00:00:00 2001
+Message-Id: <0a0747c3b7f669be11a5231d3ade214a4d0fe5b7.1702927048.git.tamas.lengyel@intel.com>
+From: Tamas K Lengyel <tamas.lengyel@intel.com>
+Date: Mon, 18 Dec 2023 14:17:24 -0500
+Subject: [PATCH 3/8] x86/monitor: report extra vmexit information
+
+---
+ xen/arch/x86/hvm/monitor.c             | 14 +++++++++----
+ xen/arch/x86/hvm/vmx/vmx.c             | 29 +++++++++++++++++++++++---
+ xen/arch/x86/include/asm/hvm/monitor.h | 15 +++++++++++--
+ xen/include/public/vm_event.h          |  7 +++++++
+ 4 files changed, 56 insertions(+), 9 deletions(-)
+
+diff --git a/xen/arch/x86/hvm/monitor.c b/xen/arch/x86/hvm/monitor.c
+index 4f500beaf5..58fef6c728 100644
+--- a/xen/arch/x86/hvm/monitor.c
++++ b/xen/arch/x86/hvm/monitor.c
+@@ -328,8 +328,7 @@ bool hvm_monitor_check_p2m(unsigned long gla, gfn_t gfn, uint32_t pfec,
+     return monitor_traps(curr, true, &req) >= 0;
+ }
+ 
+-int hvm_monitor_vmexit(unsigned long exit_reason,
+-                       unsigned long exit_qualification)
++int hvm_monitor_vmexit(struct vmexit_info *info)
+ {
+     struct vcpu *curr = current;
+     struct arch_domain *ad = &curr->domain->arch;
+@@ -338,8 +337,15 @@ int hvm_monitor_vmexit(unsigned long exit_reason,
+     ASSERT(ad->monitor.vmexit_enabled);
+ 
+     req.reason = VM_EVENT_REASON_VMEXIT;
+-    req.u.vmexit.arch.vmx.reason = exit_reason;
+-    req.u.vmexit.arch.vmx.qualification = exit_qualification;
++    req.u.vmexit.arch.vmx.reason = info->exit_reason;
++    req.u.vmexit.arch.vmx.qualification = info->exit_qualification;
++    req.u.vmexit.arch.vmx.gla = info->guest_linear_address;
++    req.u.vmexit.arch.vmx.interruption_info = info->interruption_info;
++    req.u.vmexit.arch.vmx.interruption_error = info->interruption_error;
++    req.u.vmexit.arch.vmx.idt_vectoring_info = info->idt_vectoring_info;
++    req.u.vmexit.arch.vmx.idt_vectoring_error = info->idt_vectoring_error;
++    req.u.vmexit.arch.vmx.instruction_length = info->instruction_length;
++    req.u.vmexit.arch.vmx.instruction_info = info->instruction_info;
+ 
+     set_npt_base(curr, &req);
+ 
+diff --git a/xen/arch/x86/hvm/vmx/vmx.c b/xen/arch/x86/hvm/vmx/vmx.c
+index 5cc9a3876d..de2bcce022 100644
+--- a/xen/arch/x86/hvm/vmx/vmx.c
++++ b/xen/arch/x86/hvm/vmx/vmx.c
+@@ -3048,10 +3048,31 @@ static int get_instruction_length(void)
+     unsigned long len;
+ 
+     __vmread(VM_EXIT_INSTRUCTION_LEN, &len); /* Safe: callers audited */
+-    BUG_ON((len < 1) || (len > MAX_INST_LEN));
++
+     return len;
+ }
+ 
++static void get_exit_infos(struct vmexit_info *info)
++{
++    __vmread(EXIT_QUALIFICATION, &info->exit_qualification);
++    __vmread(VM_EXIT_INTR_INFO, &info->interruption_info);
++    __vmread(VM_EXIT_INTR_ERROR_CODE, &info->interruption_error);
++    __vmread(IDT_VECTORING_INFO, &info->idt_vectoring_info);
++    __vmread(IDT_VECTORING_ERROR_CODE, &info->idt_vectoring_error);
++    __vmread(VM_EXIT_INSTRUCTION_LEN, &info->instruction_length);
++    __vmread(VMX_INSTRUCTION_INFO, &info->instruction_info);
++    __vmread(GUEST_LINEAR_ADDRESS, &info->guest_linear_address);
++
++    /* poison value */
++    __vmwrite(VM_EXIT_INTR_INFO, 0xbeef);
++    __vmwrite(VM_EXIT_INTR_ERROR_CODE, 0xbeef);
++    __vmwrite(IDT_VECTORING_INFO, 0xbeef);
++    __vmwrite(IDT_VECTORING_ERROR_CODE, 0xbeef);
++    __vmwrite(VM_EXIT_INSTRUCTION_LEN, 0xbeef);
++    __vmwrite(VMX_INSTRUCTION_INFO, 0xbeef);
++    __vmwrite(GUEST_LINEAR_ADDRESS, 0xbeef);
++}
++
+ void update_guest_eip(void)
+ {
+     struct cpu_user_regs *regs = guest_cpu_user_regs();
+@@ -4141,9 +4162,11 @@ void vmx_vmexit_handler(struct cpu_user_regs *regs)
+     if ( unlikely(currd->arch.monitor.vmexit_enabled) )
+     {
+         int rc;
++        struct vmexit_info info = { .exit_reason = exit_reason };
+ 
+-        __vmread(EXIT_QUALIFICATION, &exit_qualification);
+-        rc = hvm_monitor_vmexit(exit_reason, exit_qualification);
++        get_exit_infos(&info);
++
++        rc = hvm_monitor_vmexit(&info);
+         if ( rc < 0 )
+             goto exit_and_crash;
+         if ( rc )
+diff --git a/xen/arch/x86/include/asm/hvm/monitor.h b/xen/arch/x86/include/asm/hvm/monitor.h
+index 02021be47b..6af0d512cc 100644
+--- a/xen/arch/x86/include/asm/hvm/monitor.h
++++ b/xen/arch/x86/include/asm/hvm/monitor.h
+@@ -17,6 +17,18 @@ enum hvm_monitor_debug_type
+     HVM_MONITOR_DEBUG_EXCEPTION,
+ };
+ 
++struct vmexit_info {
++    unsigned long exit_reason;
++    unsigned long exit_qualification;
++    unsigned long interruption_info;
++    unsigned long interruption_error;
++    unsigned long idt_vectoring_info;
++    unsigned long idt_vectoring_error;
++    unsigned long instruction_length;
++    unsigned long instruction_info;
++    unsigned long guest_linear_address;
++};
++
+ /*
+  * Called for current VCPU on crX/MSR changes by guest. Bool return signals
+  * whether emulation should be postponed.
+@@ -40,8 +52,7 @@ bool hvm_monitor_emul_unimplemented(void);
+ 
+ bool hvm_monitor_check_p2m(unsigned long gla, gfn_t gfn, uint32_t pfec,
+                            uint16_t kind);
+-int hvm_monitor_vmexit(unsigned long exit_reason,
+-                       unsigned long exit_qualification);
++int hvm_monitor_vmexit(struct vmexit_info *info);
+ 
+ int hvm_monitor_io(unsigned int port, unsigned int bytes,
+                    bool in, bool str);
+diff --git a/xen/include/public/vm_event.h b/xen/include/public/vm_event.h
+index 3a86f0e208..4dc35d3bcf 100644
+--- a/xen/include/public/vm_event.h
++++ b/xen/include/public/vm_event.h
+@@ -386,6 +386,13 @@ struct vm_event_vmexit {
+         struct {
+             uint64_t reason;
+             uint64_t qualification;
++            uint64_t gla;
++            uint32_t interruption_info;
++            uint32_t interruption_error;
++            uint32_t idt_vectoring_info;
++            uint32_t idt_vectoring_error;
++            uint32_t instruction_length;
++            uint32_t instruction_info;
+         } vmx;
+     } arch;
+ };
+-- 
+2.34.1
+
