@@ -175,5 +175,5 @@ cython_debug/
 # Ignore dynaconf secret files
 .secrets.*
 
-# xensifter
+# vmsifter
 /workdir/
