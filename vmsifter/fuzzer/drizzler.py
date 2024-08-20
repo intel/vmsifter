@@ -1,4 +1,4 @@
-sys# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: MIT
 
 from __future__ import annotations
