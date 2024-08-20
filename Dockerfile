@@ -3,7 +3,7 @@
 
 ARG BASEIMAGE=pypy:3.10-7-slim-bookworm
 ARG BUILD_ID=""
-FROM ${BASEIMAGE} AS xensifter-deps
+FROM ${BASEIMAGE} AS vmsifter-deps
 LABEL build=${BUILD_ID}
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -26,7 +26,7 @@ apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF
 
-FROM xensifter-deps AS xensifter-xtf-builder
+FROM vmsifter-deps AS vmsifter-xtf-builder
 LABEL build=${BUILD_ID}
 
 COPY ./xtf/ /code/xtf/
@@ -43,7 +43,7 @@ make TESTS=tests/xensifter -e -j "$(nproc)"
 make TESTS=tests/xensifter install
 EOF
 
-FROM xensifter-deps AS xensifter-xen-builder
+FROM vmsifter-deps AS vmsifter-xen-builder
 LABEL build=${BUILD_ID}
 ENV CCACHE_DIR=/root/.ccache
 ENV PATH=/usr/lib/ccache:$PATH
@@ -68,12 +68,12 @@ make -e -j "$(nproc)" dist-tools
 make -e install-tools
 EOF
 
-FROM xensifter-deps AS xensifter-libvmi-builder
+FROM vmsifter-deps AS vmsifter-libvmi-builder
 LABEL build=${BUILD_ID}
 
 COPY ./libvmi /code/libvmi
 COPY ./patches/ /code/patches/
-COPY --from=xensifter-xen-builder /code/xen-install /code/xen-install
+COPY --from=vmsifter-xen-builder /code/xen-install /code/xen-install
 
 WORKDIR /code/libvmi
 
@@ -91,12 +91,12 @@ cmake --install /code/libvmi/build
 EOF
 
 
-FROM xensifter-deps AS xensifter-injector-builder
+FROM vmsifter-deps AS vmsifter-injector-builder
 LABEL build=${BUILD_ID}
 
-COPY --from=xensifter-xtf-builder /code/xtf-install/code/xtf/  /code/xtf/
-COPY --from=xensifter-xen-builder /code/xen-install/ /code/xen-install/
-COPY --from=xensifter-libvmi-builder /code/libvmi-install/ /code/libvmi-install/
+COPY --from=vmsifter-xtf-builder /code/xtf-install/code/xtf/  /code/xtf/
+COPY --from=vmsifter-xen-builder /code/xen-install/ /code/xen-install/
+COPY --from=vmsifter-libvmi-builder /code/libvmi-install/ /code/libvmi-install/
 RUN <<EOF
 set -e
 rsync -au /code/xen-install/ /
@@ -115,10 +115,10 @@ EOF
 FROM ${BASEIMAGE} AS python-base
 ARG POETRY_VERSION="1.8.3"
 
-COPY --from=xensifter-xtf-builder /code/xtf-install/code/xtf/  /code/xtf/
-COPY --from=xensifter-xen-builder /code/xen-install/ /code/xen-install/
-COPY --from=xensifter-libvmi-builder /code/libvmi-install/ /code/libvmi-install/
-COPY --from=xensifter-injector-builder /usr/local/bin/injector /usr/local/bin/injector
+COPY --from=vmsifter-xtf-builder /code/xtf-install/code/xtf/  /code/xtf/
+COPY --from=vmsifter-xen-builder /code/xen-install/ /code/xen-install/
+COPY --from=vmsifter-libvmi-builder /code/libvmi-install/ /code/libvmi-install/
+COPY --from=vmsifter-injector-builder /usr/local/bin/injector /usr/local/bin/injector
 
 RUN <<EOF
 set -e
@@ -204,7 +204,7 @@ RUN ldconfig && mkdir -p /var/run/xen
 # TODO: reduce scope to docopt
 ENV PYTHONWARNINGS="ignore"
 
-FROM python-base AS xensifter-dev
+FROM python-base AS vmsifter-dev
 
 # ensure permissions for all users
 RUN chown -R root:dev /code
@@ -213,7 +213,7 @@ ENTRYPOINT [ "poetry", "run", "xensifter" ]
 # uncomment for profiling
 # ENTRYPOINT [ "poetry", "run", "python", "-m", "cProfile", "-o", "/workdir/output.cprof", "-m", "xensifter" ]
 
-FROM python-base AS xensifter-prod
+FROM python-base AS vmsifter-prod
 
 RUN <<EOF
 set -e
