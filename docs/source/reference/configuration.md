@@ -61,7 +61,7 @@ Filename for the Unix socket used to communicate with the injector.
 
 Will be created inside the [workdir](#workdir).
 
-Default: `xensifter_sock`
+Default: `vmsifter_sock`
 
 ### `workdir`
 

@@ -42,8 +42,8 @@ jobs:
         run: docker rm -f ${{ env.DOCKER_NAME }} || true
         if: always()
 
-      - name: remove xensifter socket
-        run: rm -f ${{ env.WORKDIR }}/xensifter_sock
+      - name: remove vmsifter socket
+        run: rm -f ${{ env.WORKDIR }}/vmsifter_sock
         if: always()
 
       - name: Upload results

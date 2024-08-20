@@ -1,6 +1,6 @@
 jobs = 1
 refresh_frequency = 10000
-socket_name = "xensifter_sock"
+socket_name = "vmsifter_sock"
 insn_buf_size = 15
 min_prefix_count = 0
 max_prefix_count = 0
