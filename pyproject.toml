@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "vmsifter"
 version = "0.1.0"
-description = "x86 instruction fuzzer based on Xen VMI"
+description = "Enhanced sandsifter with performance counter monitoring and ring0 execution"
 authors = [
   "Tamas K Lengyel <tamas.lengyel@intel.com>",
   "Mathieu Tarral <mathieu.tarral@intel.com>",
