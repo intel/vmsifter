@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "xensifter"
+name = "vmsifter"
 version = "0.1.0"
 description = "x86 instruction fuzzer based on Xen VMI"
 authors = [
@@ -37,12 +37,12 @@ ipdb = "^0.13.11"
 ansible = "^6.7.0"
 
 [tool.poetry.scripts]
-xensifter = 'xensifter.__main__:main'
+vmsifter = 'vmsifter.__main__:main'
 
 [tool.poe.tasks]
 format = { shell = "black . && isort ." }
 lint = "flake8 --show-source --statistics"
-typing = "mypy -p xensifter"
+typing = "mypy -p vmsifter"
 ccode = { shell = "poe format && poe lint" }
 pytest = "pytest --pdb --pdbcls=IPython.terminal.debugger:Pdb --verbose"
 bench_test = """
@@ -59,8 +59,6 @@ format_check = { shell = "black . --check && isort . --check" }
 [tool.poe.tasks.deploy]
 cmd = "ansible-playbook -i inventory.yml site.yml"
 cwd = "deploy"
-
-
 
 # tools configuration
 [tool.black]
