@@ -17,4 +17,4 @@ docker run --rm -ti \
     -v $PWD/workdir:/workdir \
     --user $(id -u):$(id -g) \
     --group-add sudo \
-    xensifter --fuzzer-mode DRIZZLER "$@"
+    vmsifter-dev --fuzzer-mode DRIZZLER "$@"
