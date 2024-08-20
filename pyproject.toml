@@ -10,7 +10,7 @@ authors = [
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
+python = "^3.10"
 coloredlogs = "^15.0.1"
 PyYAML = "^6.0"
 docopt = "^0.6.2"
@@ -34,7 +34,7 @@ ipdb = "^0.13.11"
 
 
 [tool.poetry.group.deploy.dependencies]
-ansible = "^6.7.0"
+ansible = "^10.3.0"
 
 [tool.poetry.scripts]
 vmsifter = 'vmsifter.__main__:main'
