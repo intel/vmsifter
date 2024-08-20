@@ -210,8 +210,6 @@ FROM python-base AS vmsifter-dev
 RUN chown -R root:dev /code
 
 ENTRYPOINT [ "poetry", "run", "vmsifter" ]
-# uncomment for profiling
-# ENTRYPOINT [ "poetry", "run", "python", "-m", "cProfile", "-o", "/workdir/output.cprof", "-m", "xensifter" ]
 
 FROM python-base AS vmsifter-prod
 
