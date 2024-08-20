@@ -197,8 +197,8 @@ RUN mkdir /workdir && chmod o+w /workdir
 VOLUME ["/workdir"]
 
 # override xtf path since it has been copied in /code
-ENV XENSIFTER_INJECTOR.XENVM.XTF_PATH=/code/xtf
-ENV XENSIFTER_WORKDIR=/workdir
+ENV VMSIFTER_INJECTOR.XENVM.XTF_PATH=/code/xtf
+ENV VMSIFTER_WORKDIR=/workdir
 RUN ldconfig && mkdir -p /var/run/xen
 # ignore docopt SyntaxWarning
 # TODO: reduce scope to docopt
@@ -209,7 +209,7 @@ FROM python-base AS vmsifter-dev
 # ensure permissions for all users
 RUN chown -R root:dev /code
 
-ENTRYPOINT [ "poetry", "run", "xensifter" ]
+ENTRYPOINT [ "poetry", "run", "vmsifter" ]
 # uncomment for profiling
 # ENTRYPOINT [ "poetry", "run", "python", "-m", "cProfile", "-o", "/workdir/output.cprof", "-m", "xensifter" ]
 
@@ -222,4 +222,4 @@ python3 -m pip install --no-cache-dir dist/*.whl
 python3 -m pip install --no-cache-dir pdbpp==0.10.3
 EOF
 
-ENTRYPOINT ["xensifter"]
+ENTRYPOINT ["vmsifter"]
