@@ -640,17 +640,17 @@ int main(int argc, char** argv)
     const char* opts = "hd:si:c:elfm:tzr:D";
 
     // read domid from env by default
-    char* envvar = getenv("XENSIFTER_DOMID");
+    char* envvar = getenv("VMSIFTER_DOMID");
     if (envvar) {
         domid = atoi(envvar);
     }
 
-    char* perfcts = getenv("XENSIFTER_PERFCTS");
-    char* init_regs_override = getenv("XENSIFTER_INIT_REGS");
-    enable_sse = atoi(getenv("XENSIFTER_ENABLE_SSE")?:"1");
-    enable_syscall = atoi(getenv("XENSIFTER_ENABLE_SYSCALL")?:"1");
-    enable_fpu_emulation = atoi(getenv("XENSIFTER_ENABLE_FPU_EMULATION")?:"0");
-    insn_buf_size = atoi(getenv("XENSIFTER_INSN_BUF_SIZE")?:"15");
+    char* perfcts = getenv("VMSIFTER_PERFCTS");
+    char* init_regs_override = getenv("VMSIFTER_INIT_REGS");
+    enable_sse = atoi(getenv("VMSIFTER_ENABLE_SSE")?:"1");
+    enable_syscall = atoi(getenv("VMSIFTER_ENABLE_SYSCALL")?:"1");
+    enable_fpu_emulation = atoi(getenv("VMSIFTER_ENABLE_FPU_EMULATION")?:"0");
+    insn_buf_size = atoi(getenv("VMSIFTER_INSN_BUF_SIZE")?:"15");
 
     while ((c = getopt_long (argc, argv, opts, long_opts, &long_index)) != -1)
     {

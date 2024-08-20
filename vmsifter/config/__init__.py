@@ -68,7 +68,7 @@ def assign_prefix(settings, validator) -> List[int]:
 
 
 settings = Dynaconf(
-    envvar_prefix="XENSIFTER",
+    envvar_prefix="VMSIFTER",
     settings_files=[str(CUR_DIR / "settings.toml"), str(CUR_DIR / ".secrets.toml")],
     validators=[
         Validator("logging.format", must_exist=True, default=logging.Formatter(logging.BASIC_FORMAT)),

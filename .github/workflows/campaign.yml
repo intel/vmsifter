@@ -30,7 +30,7 @@ jobs:
 
       - name: set env file
         run: |
-          echo "XENSIFTER_X86.EXEC_MODE=${{ env.EXEC_MODE }}" > .env
+          echo "VMSIFTER_X86.EXEC_MODE=${{ env.EXEC_MODE }}" > .env
 
       - name: run.sh
         run: |

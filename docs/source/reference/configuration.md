@@ -11,7 +11,7 @@ All configuration files are using the [`TOML`](https://toml.io/en/) format.
 1. Default configuration file [`xensifter/config/settings.toml`](https://github.com/intel-sandbox/xensifter/blob/main/xensifter/config/settings.toml)
 2. Current directory `.secret.TOML`
 3. Command line arguments
-4. Configuration keys specified by environment variables prefixed by `XENSIFTER_`. (Ex: `XENSIFTER_DEBUG=TRUE`)
+4. Configuration keys specified by environment variables prefixed by `VMSIFTER_`. (Ex: `VMSIFTER_DEBUG=TRUE`)
 
 ## Keys
 
