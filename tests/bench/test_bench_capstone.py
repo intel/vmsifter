@@ -7,7 +7,7 @@ from itertools import islice
 import pytest
 from capstone import CS_ARCH_X86, CS_MODE_64, Cs
 
-from xensifter.fuzzer.random import random_fuzzer_gen
+from vmsifter.fuzzer.random import random_fuzzer_gen
 
 
 @pytest.fixture

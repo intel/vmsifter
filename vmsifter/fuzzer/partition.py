@@ -5,7 +5,7 @@ from typing import List
 
 from attrs import define
 
-from xensifter.config import settings
+from vmsifter.config import settings
 
 
 @define(auto_attribs=True)

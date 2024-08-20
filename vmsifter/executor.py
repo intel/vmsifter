@@ -16,18 +16,18 @@ from typing import Dict, List, Optional, Tuple, Type
 
 from attrs import asdict
 
-from xensifter.config import dump_config, settings
-from xensifter.fuzzer import get_selected_gen
-from xensifter.fuzzer.types import AbstractInsnGenerator
-from xensifter.injector import get_selected_injector
-from xensifter.injector.types import AbstractInjector
-from xensifter.utils import get_available_pcpus, pformat
-from xensifter.utils.protected_manager import ProtectedContextManager
-from xensifter.worker import Worker, WorkerStats
+from vmsifter.config import dump_config, settings
+from vmsifter.fuzzer import get_selected_gen
+from vmsifter.fuzzer.types import AbstractInsnGenerator
+from vmsifter.injector import get_selected_injector
+from vmsifter.injector.types import AbstractInjector
+from vmsifter.utils import get_available_pcpus, pformat
+from vmsifter.utils.protected_manager import ProtectedContextManager
+from vmsifter.worker import Worker, WorkerStats
 
 
 class SifterExecutor(ProtectedContextManager):
-    """Manages the lifecycle of the xensifter XTF VM and C helper xensifter program"""
+    """Manages the lifecycle of the vmsifter XTF VM and C helper vmsifter program"""
 
     def __init__(self):
         super().__init__()

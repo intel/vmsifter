@@ -10,8 +10,8 @@ from typing import Dict, Optional, Type
 
 from attr import define, field
 
-from xensifter.config import InjectorType, settings
-from xensifter.utils.protected_manager import ProtectedContextManager
+from vmsifter.config import InjectorType, settings
+from vmsifter.utils.protected_manager import ProtectedContextManager
 
 
 class AbstractInjector(ProtectedContextManager):

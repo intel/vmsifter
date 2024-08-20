@@ -6,10 +6,10 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from xensifter.config import settings
-from xensifter.fuzzer.types import NMI, FinalLogResult
-from xensifter.injector.types import InjInterruptEnum
-from xensifter.utils.protected_manager import ProtectedContextManager
+from vmsifter.config import settings
+from vmsifter.fuzzer.types import NMI, FinalLogResult
+from vmsifter.injector.types import InjInterruptEnum
+from vmsifter.utils.protected_manager import ProtectedContextManager
 
 
 class CSVOutput(ProtectedContextManager):

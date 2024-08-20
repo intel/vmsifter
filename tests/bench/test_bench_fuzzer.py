@@ -6,7 +6,6 @@ from itertools import islice
 
 import pytest
 from more_itertools import consume
-
 from xensifter.fuzzer.random import random_fuzzer_gen
 
 

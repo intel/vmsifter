@@ -1,10 +1,10 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: MIT
 
-"""XenSifter CPU fuzzer
+"""VMSifter
 
 Usage:
-  xensifter [options]
+  vmsifter [options]
 
 Options:
   -h --help                                     Show this screen.
@@ -28,8 +28,8 @@ import coloredlogs
 import yaml
 from docopt import docopt
 
-from xensifter.config import FuzzerType, InjectorType, settings
-from xensifter.executor import SifterExecutor
+from vmsifter.config import FuzzerType, InjectorType, settings
+from vmsifter.executor import SifterExecutor
 
 
 def post_mortem(func):
@@ -99,7 +99,7 @@ def main():
         if args["--refresh-freq"]:
             settings["refresh_frequency"] = int(args["--refresh-freq"])
 
-        logging.info("XenSifter started !")
+        logging.info("VMSifter started !")
 
         extra_params: Optional[Union[List[str], str]] = args["--fuzzer-param"]
         if isinstance(extra_params, str):
@@ -108,7 +108,7 @@ def main():
             executor.run(extra_params)
 
 
-# needed when xensifter is invoked as executable package
-# python -m xensifter
+# needed when vmsifter is invoked as executable package
+# python -m vmsifter
 if __name__ == "__main__":
     main()

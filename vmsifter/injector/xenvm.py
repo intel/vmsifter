@@ -9,8 +9,8 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Optional, Type
 
-from xensifter.config import InjectorType, get_injector_settings, settings
-from xensifter.utils.xen import gen_tmp_xenvm_configfile, xtf_vm
+from vmsifter.config import InjectorType, get_injector_settings, settings
+from vmsifter.utils.xen import gen_tmp_xenvm_configfile, xtf_vm
 
 from .types import AbstractInjector
 

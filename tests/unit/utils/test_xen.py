@@ -3,7 +3,7 @@
 
 from typing import List
 
-from xensifter.utils.xen import XL, XlInfo, XlVcpuInfo, parse_cfg_prefix_name
+from vmsifter.utils.xen import XL, XlInfo, XlVcpuInfo, parse_cfg_prefix_name
 
 
 def test_parse_info():
@@ -66,7 +66,7 @@ Domain-0                             0     7   14   -b-     212.7  14 / al
 
 def test_parse_cfg_prefix_name():
     file_content = """
-name="test-hvm32pse-xensifter"
+name="test-hvm32pse-vmsifter"
 
 vcpus=1
 
@@ -74,7 +74,7 @@ type="hvm"
 builder="hvm" # Legacy for before Xen 4.10
 
 memory=128
-firmware_override="/root/xensifter/xtf/tests/xensifter/test-hvm32pse-xensifter"
+firmware_override="/root/vmsifter/xtf/tests/vmsifter/test-hvm32pse-vmsifter"
 
 # The framework doesn't reboot.  A reboot signal is almost certainly a triple
 # fault instead.  Prevent it turning into a runaway domain.
@@ -84,7 +84,7 @@ on_reboot = "destroy"
 shadow_memory=128"""
     new_content = parse_cfg_prefix_name(file_content, "suffix42")
     expected_content = """
-name="test-hvm32pse-xensifter-suffix42"
+name="test-hvm32pse-vmsifter-suffix42"
 
 vcpus=1
 
@@ -92,7 +92,7 @@ type="hvm"
 builder="hvm" # Legacy for before Xen 4.10
 
 memory=128
-firmware_override="/root/xensifter/xtf/tests/xensifter/test-hvm32pse-xensifter"
+firmware_override="/root/vmsifter/xtf/tests/vmsifter/test-hvm32pse-vmsifter"
 
 # The framework doesn't reboot.  A reboot signal is almost certainly a triple
 # fault instead.  Prevent it turning into a runaway domain.

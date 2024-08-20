@@ -3,7 +3,7 @@
 
 from typing import Dict, Type
 
-from xensifter.config import InjectorType, settings
+from vmsifter.config import InjectorType, settings
 
 from .types import (
     NUMBER_OF_REGISTERS,

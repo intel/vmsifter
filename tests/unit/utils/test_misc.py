@@ -1,8 +1,8 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: MIT
 
-from xensifter.utils import _filter_pcpu_for_injector
-from xensifter.utils.xen import XlInfo, XlVcpuInfo
+from vmsifter.utils import _filter_pcpu_for_injector
+from vmsifter.utils.xen import XlInfo, XlVcpuInfo
 
 
 # TODO: SMT enabled

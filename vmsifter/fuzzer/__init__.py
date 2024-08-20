@@ -3,7 +3,7 @@
 
 from typing import Dict, Type
 
-from xensifter.config import FuzzerType, settings
+from vmsifter.config import FuzzerType, settings
 
 from .csv import CsvFuzzer
 from .drizzler import DrizzlerFuzzer

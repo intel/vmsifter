@@ -11,8 +11,8 @@ from typing import List, Optional
 
 from attrs import define
 
-from xensifter.config import settings
-from xensifter.fuzzer.types import AbstractInsnGenerator, FinalLogResult, FuzzerExecResult, Interrupted
+from vmsifter.config import settings
+from vmsifter.fuzzer.types import AbstractInsnGenerator, FinalLogResult, FuzzerExecResult, Interrupted
 
 
 @define(slots=False, auto_attribs=True, auto_detect=True)

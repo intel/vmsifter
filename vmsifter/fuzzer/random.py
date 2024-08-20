@@ -9,7 +9,7 @@ from collections.abc import Generator
 
 from attrs import define
 
-from xensifter.fuzzer.types import AbstractInsnGenerator, FuzzerExecResult
+from vmsifter.fuzzer.types import AbstractInsnGenerator, FuzzerExecResult
 
 
 # keep slots disabled, too complicated with inheritance

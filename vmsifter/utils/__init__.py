@@ -9,7 +9,7 @@ from typing import Generator
 
 from attrs import Factory
 
-from xensifter.config import settings
+from vmsifter.config import settings
 
 from .xen import XL, XlInfo, XlVcpuInfo
 

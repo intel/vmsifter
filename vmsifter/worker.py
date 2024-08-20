@@ -9,12 +9,12 @@ from typing import Counter
 
 from attr import asdict, define, field
 
-from xensifter.config import settings
-from xensifter.fuzzer.types import AbstractInsnGenerator, FuzzerExecResult
-from xensifter.injector.types import ExitReasonEnum, InjectorResultMessage
-from xensifter.output import CSVOutput
-from xensifter.utils import pformat
-from xensifter.utils.protected_manager import ProtectedContextManager
+from vmsifter.config import settings
+from vmsifter.fuzzer.types import AbstractInsnGenerator, FuzzerExecResult
+from vmsifter.injector.types import ExitReasonEnum, InjectorResultMessage
+from vmsifter.output import CSVOutput
+from vmsifter.utils import pformat
+from vmsifter.utils.protected_manager import ProtectedContextManager
 
 
 @define(slots=True)

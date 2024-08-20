@@ -5,8 +5,8 @@ from pickle import dumps, loads
 
 from capstone import CS_MODE_64
 
-from xensifter.disasm.adapter import DisasmAdapter, DisasmResult
-from xensifter.disasm.capstone import CapstoneDisasmAdaptee
+from vmsifter.disasm.adapter import DisasmAdapter, DisasmResult
+from vmsifter.disasm.capstone import CapstoneDisasmAdaptee
 
 
 def test_disasm_x86():
