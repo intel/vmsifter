@@ -1,3 +1,6 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 from pickle import dumps, loads
 
 from capstone import CS_MODE_64

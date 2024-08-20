@@ -1,3 +1,6 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 import logging
 from abc import ABC, abstractmethod
 from functools import lru_cache

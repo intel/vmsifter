@@ -1,3 +1,6 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 ARG BASEIMAGE=pypy:3.10-7-slim-bookworm
 ARG BUILD_ID=""
 FROM ${BASEIMAGE} AS xensifter-deps

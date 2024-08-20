@@ -1,3 +1,6 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 """Xensifter configuration
 
 This module handles most of Xensifter's configuration through Dynaconf, and

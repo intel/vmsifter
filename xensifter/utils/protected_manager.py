@@ -1,3 +1,6 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 from contextlib import AbstractAsyncContextManager, AbstractContextManager, AsyncExitStack, ExitStack, contextmanager
 from types import TracebackType
 from typing import Any, Coroutine, Optional, Type
