@@ -7,7 +7,7 @@ authors = [
   "Mathieu Tarral <mathieu.tarral@intel.com>",
   "Rowan Hart <rowan.hart@intel.com>",
 ]
-license = {file = "COPYING"}
+license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
