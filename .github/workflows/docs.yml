@@ -26,10 +26,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-        # tmp fix for https://github.com/actions/runner/issues/434
-        - name: Cleanup
-          run: sudo find . -mindepth 1 -delete
-
         - name: Checkout
           uses: actions/checkout@v4
 
