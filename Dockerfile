@@ -174,7 +174,7 @@ COPY ./poetry.lock ./pyproject.toml ./
 # install runtime deps
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
   poetry install --only=main --no-root
-COPY ./xensifter ./xensifter
+COPY ./vmsifter ./vmsifter
 # install app
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
   poetry install --only-root
