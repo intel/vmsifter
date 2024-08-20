@@ -1,3 +1,6 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 from xensifter.utils import _filter_pcpu_for_injector
 from xensifter.utils.xen import XlInfo, XlVcpuInfo
 

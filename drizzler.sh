@@ -1,5 +1,8 @@
 #!/bin/bash -x
 
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 mkdir -p "$PWD/workdir"
 rm $PWD/workdir/results.csv || :
 

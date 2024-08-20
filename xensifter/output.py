@@ -1,3 +1,6 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 import csv
 import logging
 from pathlib import Path

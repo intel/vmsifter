@@ -1,3 +1,6 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 import logging
 from functools import partial
 from itertools import filterfalse

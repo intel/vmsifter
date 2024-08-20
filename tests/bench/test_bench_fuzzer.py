@@ -1,3 +1,6 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 # benchmark for x86 instruction generator
 from itertools import islice
 

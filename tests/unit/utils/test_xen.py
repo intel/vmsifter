@@ -1,3 +1,6 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 from typing import List
 
 from xensifter.utils.xen import XL, XlInfo, XlVcpuInfo, parse_cfg_prefix_name

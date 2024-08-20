@@ -1,3 +1,6 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 from typing import Dict, Type
 
 from xensifter.config import FuzzerType, settings

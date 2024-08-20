@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+
 set -e
 
 usage() {
