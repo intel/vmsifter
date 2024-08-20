@@ -3,8 +3,8 @@
 
 from pickle import dump, dumps
 
-from xensifter.disasm.adapter import DisasmAdapter, DisasmResult
-from xensifter.disasm.yaxpeax import YaxpeaxDisasmAdaptee
+from vmsifter.disasm.adapter import DisasmAdapter, DisasmResult
+from vmsifter.disasm.yaxpeax import YaxpeaxDisasmAdaptee
 
 
 def test_disasm_x64():

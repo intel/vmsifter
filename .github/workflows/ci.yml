@@ -39,7 +39,7 @@ jobs:
         with:
           context: .
           tags: intel/vmsifter:latest
-          target: xensifter-dev
+          target: vmsifter-dev
           build-args: |
             BASEIMAGE=${{ matrix.baseimage }}
             BUILD_ID=-ci-${{ github.run_id }}
@@ -52,7 +52,7 @@ jobs:
       # - name: cleanup build
       #   if: always()
       #   run: |
-      #     docker rmi -f xensifter-dev-ci-${{ github.run_id }} xensifter-ci-${{ github.run_id }}
+      #     docker rmi -f vmsifter-dev-ci-${{ github.run_id }} vmsifter-ci-${{ github.run_id }}
       #     # cleanup intermediate images as well, filtering by BUILD_ID
       #     docker image prune --filter label=build=-ci-${{ github.run_id }}
 

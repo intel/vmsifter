@@ -3,8 +3,8 @@
 
 from attrs import define
 
-from xensifter.config import settings
-from xensifter.fuzzer.partition import X86Range
+from vmsifter.config import settings
+from vmsifter.fuzzer.partition import X86Range
 
 CACHE_DYNA_COMPLETION_RATE_PRECISION: int = settings.completion_rate_precision
 

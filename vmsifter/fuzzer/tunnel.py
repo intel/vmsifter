@@ -6,12 +6,12 @@ from typing import Generator
 
 from attrs import define, field
 
-from xensifter.config import settings
-from xensifter.fuzzer.partition import X86Range
-from xensifter.fuzzer.partition import partition as utils_partition
-from xensifter.fuzzer.types import EPT, NMI, AbstractInsnGenerator, FinalLogResult, FuzzerExecResult, Interrupted
-from xensifter.injector.types import InjInterruptEnum
-from xensifter.utils.completion_rate import ByteRangeCompletion
+from vmsifter.config import settings
+from vmsifter.fuzzer.partition import X86Range
+from vmsifter.fuzzer.partition import partition as utils_partition
+from vmsifter.fuzzer.types import EPT, NMI, AbstractInsnGenerator, FinalLogResult, FuzzerExecResult, Interrupted
+from vmsifter.injector.types import InjInterruptEnum
+from vmsifter.utils.completion_rate import ByteRangeCompletion
 
 
 @define(slots=True, auto_attribs=True, auto_detect=True)

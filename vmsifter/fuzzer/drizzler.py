@@ -13,8 +13,8 @@ from typing import List, Optional
 from attrs import define
 from keystone import KS_ARCH_X86, KS_MODE_64, Ks, KsError
 
-from xensifter.config import settings
-from xensifter.fuzzer.types import AbstractInsnGenerator, FinalLogResult, FuzzerExecResult, Interrupted
+from vmsifter.config import settings
+from vmsifter.fuzzer.types import AbstractInsnGenerator, FinalLogResult, FuzzerExecResult, Interrupted
 
 
 @define(slots=False, auto_attribs=True, auto_detect=True)

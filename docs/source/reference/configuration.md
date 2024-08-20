@@ -1,23 +1,23 @@
 # Configuration
 
-Xensifter configuration can be updated via configuration files, environment variables and command line switches.
+VMSifter configuration can be updated via configuration files, environment variables and command line switches.
 
-The [Dynaconf](https://www.dynaconf.com/) framework is used behind the scenes for configuration management, so everything that you learn from Dynaconf’s documentation should also be applicable for Xensifter.
+The [Dynaconf](https://www.dynaconf.com/) framework is used behind the scenes for configuration management, so everything that you learn from Dynaconf’s documentation should also be applicable for VMSifter.
 
 ## Configuration sources and precedence
 
 All configuration files are using the [`TOML`](https://toml.io/en/) format.
 
-1. Default configuration file [`xensifter/config/settings.toml`](https://github.com/intel-sandbox/xensifter/blob/main/xensifter/config/settings.toml)
+1. Default configuration file [`vmsifter/config/settings.toml`](https://github.com/intel/vmsifter/blob/main/vmsifter/config/settings.toml)
 2. Current directory `.secret.TOML`
 3. Command line arguments
-4. Configuration keys specified by environment variables prefixed by `XENSIFTER_`. (Ex: `XENSIFTER_DEBUG=TRUE`)
+4. Configuration keys specified by environment variables prefixed by `VMSIFTER_`. (Ex: `VMSIFTER_DEBUG=TRUE`)
 
 ## Keys
 
 ### `jobs`
 
-How many cores should Xensifter use to parallelize its execution.
+How many cores should VMSifter use to parallelize its execution.
 
 Default: `1`
 
@@ -61,11 +61,11 @@ Filename for the Unix socket used to communicate with the injector.
 
 Will be created inside the [workdir](#workdir).
 
-Default: `xensifter_sock`
+Default: `vmsifter_sock`
 
 ### `workdir`
 
-Xensifter's working directory containing runtime information and CSV files output.
+VMSifter's working directory containing runtime information and CSV files output.
 
 Default: `$PWD/workdir`
 
@@ -96,7 +96,7 @@ Whether _Simultaneous multithreading_ is enabled on the host. Used to exclude PC
 :::{Note}
 Xen returns an "Invalid argument" when trying to pin an SMT PCPU to an injector VM.
 
-This is likely bug, so we must filter this in Xensifter.
+This is likely bug, so we must filter this in VMSifter.
 :::
 
 Default: `false`
@@ -179,7 +179,7 @@ shutil.which('injector')
 
 ##### `xtf_path`
 
-Path to modified [`XTF`](https://xenbits.xenproject.org/docs/xtf/) framework with Xensifter patches applied and compiled.
+Path to modified [`XTF`](https://xenbits.xenproject.org/docs/xtf/) framework with VMsifter patches applied and compiled.
 
 ##### `perfcts`
 

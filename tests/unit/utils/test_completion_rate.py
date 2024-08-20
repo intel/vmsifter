@@ -3,9 +3,9 @@
 
 import pytest
 
-from xensifter.config import settings
-from xensifter.fuzzer.partition import X86Range
-from xensifter.utils.completion_rate import ByteRangeCompletion
+from vmsifter.config import settings
+from vmsifter.fuzzer.partition import X86Range
+from vmsifter.utils.completion_rate import ByteRangeCompletion
 
 
 def test_completion_rate():

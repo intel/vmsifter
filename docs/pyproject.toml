@@ -1,5 +1,5 @@
 [project]
-name = "xensifter_docs"
+name = "vmsifter_docs"
 authors = [{ name = "Mathieu Tarral", email = "mathieu.tarral@protonmail.com" }]
 version = "0.1.0"
 description = "My package description"

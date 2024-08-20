@@ -5,10 +5,10 @@ from itertools import chain
 
 import pytest
 
-from xensifter.config import settings
-from xensifter.fuzzer import EPT, FuzzerExecResult, Interrupted, Other, TunnelFuzzer
-from xensifter.fuzzer.partition import X86Range, partition
-from xensifter.injector import EPTQual, EPTQualEnum, ExitReasonEnum, InjectorResultMessage, InjInterruptEnum
+from vmsifter.config import settings
+from vmsifter.fuzzer import EPT, FuzzerExecResult, Interrupted, Other, TunnelFuzzer
+from vmsifter.fuzzer.partition import X86Range, partition
+from vmsifter.injector import EPTQual, EPTQualEnum, ExitReasonEnum, InjectorResultMessage, InjInterruptEnum
 
 
 def test_tunnel_retry():

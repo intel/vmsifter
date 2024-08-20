@@ -3,8 +3,8 @@
 
 import pytest
 
-from xensifter.config import settings
-from xensifter.fuzzer.partition import X86Range, partition
+from vmsifter.config import settings
+from vmsifter.fuzzer.partition import X86Range, partition
 
 
 @pytest.mark.parametrize(

@@ -13,7 +13,7 @@ from typing import Generator, List, Optional
 
 from attr import define, field
 
-from xensifter.config import settings
+from vmsifter.config import settings
 
 
 def parse_cfg_prefix_name(cfg_content: str, name_suffix: str) -> str:

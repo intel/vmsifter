@@ -6,11 +6,11 @@ from itertools import count
 import pytest
 from capstone import CS_MODE_64
 
-from xensifter.disasm.capstone import CapstoneDisasmAdaptee
-from xensifter.disasm.interface import DisasmEngineType, DisasmResult
-from xensifter.disasm.pool import DisasmPoolExecutor
-from xensifter.disasm.yaxpeax import YaxpeaxDisasmAdaptee
-from xensifter.fuzzer.tunnel import FuzzerExecResult, TunnelFuzzer
+from vmsifter.disasm.capstone import CapstoneDisasmAdaptee
+from vmsifter.disasm.interface import DisasmEngineType, DisasmResult
+from vmsifter.disasm.pool import DisasmPoolExecutor
+from vmsifter.disasm.yaxpeax import YaxpeaxDisasmAdaptee
+from vmsifter.fuzzer.tunnel import FuzzerExecResult, TunnelFuzzer
 
 
 def test_pool_disasm_one():

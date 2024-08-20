@@ -5,7 +5,7 @@ from abc import abstractmethod
 
 from attrs import define
 
-from xensifter.utils.protected_manager import ProtectedContextManager
+from vmsifter.utils.protected_manager import ProtectedContextManager
 
 
 @define(slots=True)

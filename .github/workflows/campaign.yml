@@ -30,7 +30,7 @@ jobs:
 
       - name: set env file
         run: |
-          echo "XENSIFTER_X86.EXEC_MODE=${{ env.EXEC_MODE }}" > .env
+          echo "VMSIFTER_X86.EXEC_MODE=${{ env.EXEC_MODE }}" > .env
 
       - name: run.sh
         run: |
@@ -42,8 +42,8 @@ jobs:
         run: docker rm -f ${{ env.DOCKER_NAME }} || true
         if: always()
 
-      - name: remove xensifter socket
-        run: rm -f ${{ env.WORKDIR }}/xensifter_sock
+      - name: remove vmsifter socket
+        run: rm -f ${{ env.WORKDIR }}/vmsifter_sock
         if: always()
 
       - name: Upload results

@@ -1,7 +1,7 @@
-📗 Xensifter's Documentation
+📗 VMSifter's Documentation
 ====================
 
-Xensifter is an x86 CPU fuzzer
+Enhanced sandsifter with performance counter monitoring and ring0 execution
 
 ## Contents
 

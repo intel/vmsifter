@@ -6,7 +6,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 import pytest
 
-from xensifter.fuzzer import RandomFuzzer, TunnelFuzzer
+from vmsifter.fuzzer import RandomFuzzer, TunnelFuzzer
 
 
 @pytest.mark.parametrize(

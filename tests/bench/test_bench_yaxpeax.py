@@ -5,7 +5,6 @@ from contextlib import suppress
 from itertools import islice
 
 import pytest
-
 from xensifter.disasm.yaxpeax import YaxpeaxDisasmAdaptee
 from xensifter.fuzzer.random import random_fuzzer_gen
 

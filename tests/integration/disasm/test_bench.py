@@ -5,9 +5,9 @@ from itertools import count
 
 import pytest
 
-from xensifter.disasm.adapter import DisasmAdapter
-from xensifter.disasm.capstone import CapstoneDisasmAdaptee
-from xensifter.fuzzer.tunnel import FuzzerExecResult, TunnelFuzzer
+from vmsifter.disasm.adapter import DisasmAdapter
+from vmsifter.disasm.capstone import CapstoneDisasmAdaptee
+from vmsifter.fuzzer.tunnel import FuzzerExecResult, TunnelFuzzer
 
 
 @pytest.mark.parametrize("max_count", [10**3, 10**4, 10**5, 10**6])

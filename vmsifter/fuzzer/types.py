@@ -8,8 +8,8 @@ from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union
 
 from attr import define, evolve, field
 
-from xensifter.config import settings
-from xensifter.injector import (
+from vmsifter.config import settings
+from vmsifter.injector import (
     NUMBER_OF_REGISTERS,
     EPTQual,
     ExitReasonEnum,
@@ -18,8 +18,8 @@ from xensifter.injector import (
     PageFaultEC,
     RegistersEnum,
 )
-from xensifter.injector.types import InjectorResultMessage
-from xensifter.utils import fact_logging
+from vmsifter.injector.types import InjectorResultMessage
+from vmsifter.utils import fact_logging
 
 REGISTER_CANARY = 0x1100
 # build set(dict[RegisterEnum.RAX: 0x1101, ...])

@@ -1,4 +1,19 @@
-# Xensifter
+<h1 align="center">
+  <br>vmsifter</br>
+</h1>
+
+<h3 align="center">
+Enhanced sandsifter with performance counter monitoring and ring0 execution
+</h3>
+
+<p align="center">
+  <a href="https://intel.github.io/vmsifter/">
+    <img src="https://img.shields.io/badge/📖-Documentation-green">
+  <a>
+  <a href="https://github.com/intel/vmsifter/actions?query=workflow%3ACI">
+    <img src="https://github.com/intel/vmsifter/workflows/CI/badge.svg" alt="CI badge"/>
+  </a>
+</p>
 
 ## Requirements
 
@@ -46,7 +61,7 @@ sudo mv /etc/grub.d/20_linux_xen /etc/grub.d/09_linux_xen
 sudo update-grub
 ```
 
-### Xensifter
+### VMSifter
 
 ## Run
 
@@ -65,3 +80,7 @@ xdg-open build/html/index.html
 ## Disclaimer
 
 Note: All components are provided for research and validation purposes only. Use at your own risk.
+
+## References
+
+- [sandsifter](https://github.com/xoreaxeaxeax/sandsifter)

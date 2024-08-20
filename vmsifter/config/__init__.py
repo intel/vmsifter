@@ -1,12 +1,12 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: MIT
 
-"""Xensifter configuration
+"""VMSifter configuration
 
-This module handles most of Xensifter's configuration through Dynaconf, and
+This module handles most of VMSifter's configuration through Dynaconf, and
 exports the settings object
 
-The default configuration is both defined in xensifter/config/settings.toml for simple values
+The default configuration is both defined in vmsifter/config/settings.toml for simple values
 and inside this module as well for complex values depending on each other, or computed at runtime,
 with Dynaconf Validators.
 """
@@ -68,7 +68,7 @@ def assign_prefix(settings, validator) -> List[int]:
 
 
 settings = Dynaconf(
-    envvar_prefix="XENSIFTER",
+    envvar_prefix="VMSIFTER",
     settings_files=[str(CUR_DIR / "settings.toml"), str(CUR_DIR / ".secrets.toml")],
     validators=[
         Validator("logging.format", must_exist=True, default=logging.Formatter(logging.BASIC_FORMAT)),

@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 from pathlib import Path
 
-project = "Xensifter"
+project = "VMSifter"
 copyright = "2022, Tamas K Lengyel - Mathieu Tarral"
 author = "Tamas K Lengyel / Mathieu Tarral"
 
