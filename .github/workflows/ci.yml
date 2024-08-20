@@ -27,14 +27,6 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.docker-cache
-          key: ${{ runner.os }}-buildx-${{ hashFiles('./Dockerfile') }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
       - uses: docker/build-push-action@v5.1.0
         with:
           context: .
@@ -46,15 +38,8 @@ jobs:
           load: false
           # disable push for now.
           push: false
-          cache-from: type=local,src=/tmp/.docker-cache
-          cache-to: type=local,dest=/tmp/.docker-cache,mode=max
-
-      # - name: cleanup build
-      #   if: always()
-      #   run: |
-      #     docker rmi -f vmsifter-dev-ci-${{ github.run_id }} vmsifter-ci-${{ github.run_id }}
-      #     # cleanup intermediate images as well, filtering by BUILD_ID
-      #     docker image prune --filter label=build=-ci-${{ github.run_id }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   check:
     runs-on: ubuntu-22.04
@@ -63,10 +48,6 @@ jobs:
       matrix:
         task: [format_check, lint, typing, unit_test]
     steps:
-      # tmp fix for https://github.com/actions/runner/issues/434
-      - name: Cleanup
-        run: sudo find . -mindepth 1 -delete
-
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:

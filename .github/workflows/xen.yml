@@ -19,9 +19,6 @@ jobs:
     container:
       image: ubuntu:22.04
     steps:
-      - name: Ensure cleanup
-        run: find . -mindepth 1 -delete
-
       - name: Ensure git
         run: |
           apt-get update
@@ -87,13 +84,6 @@ jobs:
           name: xen-deb
           path: xen/dist/xen-upstream-*.deb
 
-      # always cleanup otherwise GITHUB_WORKSPACE will be left polluted by files owned as root:root
-      - name: Ensure cleanup
-        run: |
-          find . -mindepth 1 -delete
-          chown 1002:1002 $GITHUB_WORKSPACE/../*
-        if: always()
-
   release:
     permissions:
       contents: write
@@ -101,7 +91,7 @@ jobs:
     needs: xen_deb
     runs-on: ubuntu-latest
     container:
-      mage: ubuntu:22.04
+      image: ubuntu:22.04
     outputs:
       version: ${{ steps.get_version.outputs.version }}
     steps:
