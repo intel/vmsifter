@@ -6,10 +6,10 @@
 set -e
 
 usage() {
-    echo "Usage $0 [options] -- [xensifter args]"
+    echo "Usage $0 [options] -- [vmsifter args]"
     echo "Options:"
     echo "  -h, --help          Show this message"
-    echo "  -i <ARG>            Use <ARG> Docker image (Default: xensifter-dev)"
+    echo "  -i <ARG>            Use <ARG> Docker image (Default: vmsifter-dev)"
     echo "  -w <ARG>            Set workdir path (Default: $PWD/workdir)"
     echo "  -b <ARG>            Use <ARG> as Dockerfile baseimage (Default: See Dockerfile.dev)"
     echo "  -u <ARG>            Toggle image building (Default: true)"
@@ -17,7 +17,7 @@ usage() {
     echo "  -n <ARG>            Name the container as <ARG>"
 }
 
-IMAGE="xensifter-dev"
+IMAGE="vmsifter-dev"
 USER="$(id -u):$(id -g)"
 BASEIMAGE=""
 WORKDIR_PATH="$PWD/workdir"
@@ -92,20 +92,20 @@ if [[ "$IMAGE_BUILD_ENABLED" == "true" || "$IMAGE_BUILD_ENABLED" == "yes" ]]; th
         .
 fi
 
-# try to guess if one of xensifter args is a file
+# try to guess if one of vmsifter args is a file
 # then mount it as a volume to expose them transparently
 ADDITIONAL_VOLUMES=""
-xensifter_args=("$@")
-for i in "${!xensifter_args[@]}"; do
+vmsifter_args=("$@")
+for i in "${!vmsifter_args[@]}"; do
     # check if existing file
-    arg="${xensifter_args[$i]}"
+    arg="${vmsifter_args[$i]}"
     if [ -f "$arg" ]; then
         # get abs path
         abs_path=$(realpath "$arg")
         # add it as volume
         ADDITIONAL_VOLUMES+=" -v $abs_path:$abs_path"
-        # rewrite xensifter argument
-        xensifter_args[$i]="$abs_path"
+        # rewrite vmsifter argument
+        vmsifter_args[$i]="$abs_path"
     fi
 done
 
@@ -128,4 +128,4 @@ docker run --rm -i \
     --user $USER \
     --group-add sudo \
     $CONTAINER_NAME_ARG \
-    $IMAGE "${xensifter_args[@]}"
+    $IMAGE "${vmsifter_args[@]}"
