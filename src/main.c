@@ -607,7 +607,7 @@ done:
 
 static void help(void)
 {
-    printf("xensifter\n");
+    printf("vmsifter\n");
 }
 
 int main(int argc, char** argv)
@@ -615,7 +615,7 @@ int main(int argc, char** argv)
     bool setup = false;
     char *input = NULL, *sock = NULL;
     pinned_cpu = DEFAULT_PINNED_CPU;
-    printf("Xensifter C starts\n");
+    printf("VMSifter C starts\n");
 
     int c, long_index = 0;
     const struct option long_opts[] =
