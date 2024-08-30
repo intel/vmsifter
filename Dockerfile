@@ -38,9 +38,9 @@ ENV DESTDIR="/code/xtf-install"
 
 RUN <<EOF
 set -e
-patch -p1 < ../patches/0001-xtf-xensifter.patch
-make TESTS=tests/xensifter -e -j "$(nproc)"
-make TESTS=tests/xensifter install
+patch -p1 < ../patches/0001-xtf-VMSifter-test-execution-VM.patch
+make TESTS=tests/vmsifter -e -j "$(nproc)"
+make TESTS=tests/vmsifter install
 EOF
 
 FROM vmsifter-deps AS vmsifter-xen-builder

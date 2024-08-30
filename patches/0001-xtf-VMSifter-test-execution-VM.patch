@@ -1,18 +1,28 @@
-From 1ab8d92a4beba5a0223885fcf68aefed0f7f39d2 Mon Sep 17 00:00:00 2001
+From c8ee7255efdfc5f8a0daed8a3260f6ab7c6de7ce Mon Sep 17 00:00:00 2001
 From: Tamas K Lengyel <tamas.lengyel@intel.com>
 Date: Thu, 1 Jun 2023 17:18:07 +0000
-Subject: [PATCH] Xensifter
+Subject: [PATCH] VMSifter test execution VM
 
+The XTF VM's forks will be used as the environment in which
+VMSifter will send instruction(s) to execute in. The parent VM
+during boot enables various system settings based on answers it
+receives from the VMSifter injector CPUID hook. It signals boot
+completion also with a magic CPUID.
+
+During active testing the VM will be forked and the actual execution
+of tests will be performed in the forks instead of the parent VM.
+
+Signed-off-by: Tamas K Lengyel <tamas.lengyel@intel.com>
 ---
  arch/x86/include/arch/cpuid.h     |   1 +
  arch/x86/include/arch/msr-index.h |   4 +
- tests/xensifter/Makefile          |  10 +++
- tests/xensifter/extra.cfg.in      |   1 +
- tests/xensifter/main.c            | 124 ++++++++++++++++++++++++++++++
+ tests/vmsifter/Makefile           |  10 +++
+ tests/vmsifter/extra.cfg.in       |   1 +
+ tests/vmsifter/main.c             | 124 ++++++++++++++++++++++++++++++
  5 files changed, 140 insertions(+)
- create mode 100644 tests/xensifter/Makefile
- create mode 100644 tests/xensifter/extra.cfg.in
- create mode 100644 tests/xensifter/main.c
+ create mode 100644 tests/vmsifter/Makefile
+ create mode 100644 tests/vmsifter/extra.cfg.in
+ create mode 100644 tests/vmsifter/main.c
 
 diff --git a/arch/x86/include/arch/cpuid.h b/arch/x86/include/arch/cpuid.h
 index e6d6a8c..c3e55bc 100644
@@ -27,7 +37,7 @@ index e6d6a8c..c3e55bc 100644
  #define cpu_has_page1gb         cpu_has(X86_FEATURE_PAGE1GB)
  #define cpu_has_lm              cpu_has(X86_FEATURE_LM)
 diff --git a/arch/x86/include/arch/msr-index.h b/arch/x86/include/arch/msr-index.h
-index be7ba0d..e66acfe 100644
+index 0495c3f..a7f0e4d 100644
 --- a/arch/x86/include/arch/msr-index.h
 +++ b/arch/x86/include/arch/msr-index.h
 @@ -23,6 +23,10 @@
@@ -41,15 +51,15 @@ index be7ba0d..e66acfe 100644
  #define MSR_PERFEVTSEL(n)              (0x00000186 + (n))
  
  #define MSR_MISC_ENABLE                 0x000001a0
-diff --git a/tests/xensifter/Makefile b/tests/xensifter/Makefile
+diff --git a/tests/vmsifter/Makefile b/tests/vmsifter/Makefile
 new file mode 100644
-index 0000000..2bf501b
+index 0000000..636d49f
 --- /dev/null
-+++ b/tests/xensifter/Makefile
++++ b/tests/vmsifter/Makefile
 @@ -0,0 +1,10 @@
 +include $(ROOT)/build/common.mk
 +
-+NAME      := xensifter
++NAME      := vmsifter
 +CATEGORY  := utility
 +TEST-ENVS := hvm32 hvm32pae hvm32pse hvm64
 +TEST-EXTRA-CFG := extra.cfg.in
@@ -57,29 +67,29 @@ index 0000000..2bf501b
 +obj-perenv += main.o
 +
 +include $(ROOT)/build/gen.mk
-diff --git a/tests/xensifter/extra.cfg.in b/tests/xensifter/extra.cfg.in
+diff --git a/tests/vmsifter/extra.cfg.in b/tests/vmsifter/extra.cfg.in
 new file mode 100644
 index 0000000..c7629a1
 --- /dev/null
-+++ b/tests/xensifter/extra.cfg.in
++++ b/tests/vmsifter/extra.cfg.in
 @@ -0,0 +1 @@
 +shadow_memory=128
-diff --git a/tests/xensifter/main.c b/tests/xensifter/main.c
+diff --git a/tests/vmsifter/main.c b/tests/vmsifter/main.c
 new file mode 100644
-index 0000000..ceb6c2d
+index 0000000..352f5d7
 --- /dev/null
-+++ b/tests/xensifter/main.c
++++ b/tests/vmsifter/main.c
 @@ -0,0 +1,124 @@
 +/**
-+ * @file tests/xensifter/main.c
-+ * @ref xensifter Test VM to be used with XenSifter
++ * @file tests/vmsifter/main.c
++ * @ref vmsifter Test VM to be used with VMSifter
 + *
-+ * @page xensfiter
++ * @page vmsfiter
 + *
 + */
 +#include <xtf.h>
 +
-+const char test_title[] = "xensifter";
++const char test_title[] = "vmsifter";
 +
 +void test_main(void)
 +{
@@ -87,7 +97,7 @@ index 0000000..ceb6c2d
 +    uint32_t eax, ebx, ecx, edx;
 +    uint32_t count;
 +
-+    printk("Starting xensifter\n");
++    printk("Starting vmsifter injector\n");
 +
 +    // Turn on SSE and AVX instructions
 +    cpuid_count(0x13371337, 2, &eax, &ebx, &ecx, &edx);
@@ -161,7 +171,7 @@ index 0000000..ceb6c2d
 +
 +    cpuid_count(0x13371337, 0, &eax, &ebx, &ecx, &edx);
 +
-+    // Execution will be hijacked from here when XenSifter is active.
++    // Execution will be hijacked from here when VMSifter is active.
 +    for (i=0;i<10;i++)
 +        eax += eax + i;
 +
