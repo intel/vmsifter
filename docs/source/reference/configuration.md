@@ -23,13 +23,15 @@ Default: `1`
 
 ### `fuzzer_mode`
 
-Which fuzzing mode to use.
+Select which fuzzing mode to use.
 
 Choices:
-- `random`
-- `tunnel`
-- `csv`
-- `drizzler`
+- `RANDOM`: run random instructions
+- `TUNNEL`: sandsifter-style black-box instruction discovery
+- `CSV`: run instruction(s) from CSV file
+- `DRIZZLER`: experimental
+
+Default: `TUNNEL`
 
 ### `refresh_frequency`
 
@@ -52,8 +54,6 @@ Default: `0`
 Maximum amount of prefixes that should be inserted by the fuzzer into the candidate instruction.
 
 Default: `0`
-
-
 
 ### `socket_name`
 
@@ -85,7 +85,7 @@ Default: `0`
 
 ### `extra_byte`
 
-TODO
+The number of extra byte(s) to add at the end of the generated instructions in the range `0x0 .. 0xff` sequentially. 
 
 Default: `0`
 
@@ -179,20 +179,51 @@ shutil.which('injector')
 
 ##### `xtf_path`
 
-Path to modified [`XTF`](https://xenbits.xenproject.org/docs/xtf/) framework with VMsifter patches applied and compiled.
+Path to [`XTF`](https://xenbits.xenproject.org/docs/xtf/) framework with VMsifter patches applied and compiled.
 
 ##### `perfcts`
 
-TODO
+Chose the value to be set for the 4 configurable performance counters. These values are CPU specific and should be set accordingly.
+Performance counters are automatically configured to freeze counting when in VMM or SMM modes and no PMI is enabled.
+
+See `SDM Chapter 20 Performance Monitoring` for detailed documentation on performance counter settings and [`https://perfmon-events.intel.com`](https://perfmon-events.intel.com)
+
+For example, to select `UOPS_ISSUED.ANY` on a Ice Lake processor we can find `EventSel=0EH UMask=01H`, therefore we would set `0x43010e` for one of the performance counters to enable it in both OS and USR modes.
+
+```TOML
+24-31b:     CMask
+22b:        Enable
+17b:        OS  // monitor active in OS mode (ring0)
+16b:        USR // monitor active in USR mode (ring3)
+8-15b:      UMask
+0-7b:       EventSel
+```
+
+Default: `"0x043010e,0x04301c2,0x04307c1,0x44304a3"`
 
 ##### `sse`
 
-TODO
+Toggle to enable SSE and AVX instructions. Specificially enable the following control register bits:
+
+```TOML
+CR4: X86_CR4_OSFXSR | X86_CR4_OSXSAVE | X86_CR4_OSXMMEXCPT
+XCR0: XSTATE_SSE | XSTATE_YMM
+```
+
+Default: `true`
 
 ##### `syscall`
 
-TODO
+Toggle to enable syscall instructions.
+
+Default: `true`
 
 ##### `fpu_emulation`
 
-TODO
+Toggle to enable x87 FPU emulation. Specifically enable to set the following control register bit:
+
+```TOML
+CR0: X86_CR0_EM
+```
+
+Default: `false`
