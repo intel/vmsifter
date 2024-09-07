@@ -1,7 +1,7 @@
 📗 VMSifter's Documentation
 ====================
 
-Enhanced sandsifter with performance counter monitoring and ring0 execution
+Framework for in-VM test execution and monitoring. Inspired by [Sandsifter](https://github.com/xoreaxeaxeax/sandsifter) with additional performance counter monitoring and ring0 instruction execution and the ability to easily add custom test generation and execution pipelines.
 
 ## Contents
 
