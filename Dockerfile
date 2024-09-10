@@ -128,7 +128,7 @@ apt-get update && apt-get install --no-install-recommends -y \
 rsync -au /code/xen-install/ /
 rsync -au /code/libvmi-install/ /usr/local/
 # cleanup
-apt-get upgrade
+apt-get upgrade -y
 apt-get remove -y linux-libc-dev
 apt-get clean
 rm -rf /var/lib/apt/lists/*
