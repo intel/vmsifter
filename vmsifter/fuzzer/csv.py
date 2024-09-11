@@ -33,7 +33,7 @@ class CsvFuzzer(AbstractInsnGenerator):
         self.reader = csv.DictReader(f)
         self.row = next(self.reader)
         insn = bytearray.fromhex(self.row["insn"])
-        super().__init__(insn_buffer=insn, extra_params=extra_params)
+        self.init_buffer(buffer=insn)
 
         if settings.extra_byte != 0:
             self.insn_length += settings.extra_byte

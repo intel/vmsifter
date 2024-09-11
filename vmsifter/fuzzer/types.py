@@ -263,9 +263,14 @@ class AbstractInsnGenerator(ABC):
     cache_dyna_insn_buf_size: int = field(init=False, default=settings.insn_buf_size)
 
     def __attrs_post_init__(self):
+        self.init_buffer(self.insn_buffer)
+
+    # open this method since we might need to reinit the buffer in a child class
+    # due to additional fuzzer params
+    def init_buffer(self, buffer):
         min_len = settings.min_prefix_count + 1
-        if self.insn_buffer is None:
-            self.insn_length = min_len  # type: ignore[unreachable]
+        if buffer is None:
+            self.insn_length = min_len
             self.insn_buffer = self.__class__._get_default_buffer()
         else:
             self.insn_length = len(self.insn_buffer)
