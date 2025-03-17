@@ -31,10 +31,10 @@ def parse_cfg_prefix_name(cfg_content: str, name_suffix: str) -> str:
 
 @contextmanager
 def gen_tmp_xenvm_configfile() -> Generator[Path, None, None]:
-    """Generate a temporary copy of xtf/tests/xensifter/test-xxx-xensifter.cfg, with a temporary non-unique VM name"""
+    """Generate a temporary copy of xtf/tests/vmsifter/test-xxx-vmsifter.cfg, with a temporary non-unique VM name"""
     with NamedTemporaryFile(mode="w") as tmp_cfg:
         xtf_cfg_file_path = Path(
-            f"{settings.injector.xenvm.XTF_PATH}/tests/xensifter/test-{settings.injector.xenvm.xl.config}-xensifter.cfg"
+            f"{settings.injector.xenvm.XTF_PATH}/tests/vmsifter/test-{settings.injector.xenvm.xl.config}-vmsifter.cfg"
         )
         with open(xtf_cfg_file_path) as f:
             content = f.read()
@@ -61,7 +61,7 @@ def xtf_vm(cfg_file_path: Path) -> Generator[int, None, None]:
     output = subprocess.check_output(["sudo", "xl", "list", "--long"])
     xl_list_info = json.loads(output)
     # look for vm whose name matches xensifter
-    xensifter_vm_list = [vm for vm in xl_list_info if "xensifter" in vm["config"]["c_info"]["name"]]
+    xensifter_vm_list = [vm for vm in xl_list_info if "vmsifter" in vm["config"]["c_info"]["name"]]
     assert len(xensifter_vm_list) == 1
     xensifter_vm = xensifter_vm_list.pop()
     # get domid
