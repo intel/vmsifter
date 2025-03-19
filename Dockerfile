@@ -1,7 +1,7 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: MIT
 
-ARG BASEIMAGE=pypy:3.10-7-slim-bookworm
+ARG BASEIMAGE=pypy:3.11-7-slim-bookworm
 ARG BUILD_ID=""
 FROM ${BASEIMAGE} AS vmsifter-deps
 LABEL build=${BUILD_ID}

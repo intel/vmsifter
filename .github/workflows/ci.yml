@@ -15,7 +15,7 @@ jobs:
       matrix:
         # TODO: 'python:3.12.4-bullseye'
         # only release for pypy as it's faster anyway
-        baseimage: ['pypy:3.10-7-slim-bookworm']
+        baseimage: ['pypy:3.11-7-slim-bookworm']
     steps:
       - uses: actions/checkout@v4
         with:
