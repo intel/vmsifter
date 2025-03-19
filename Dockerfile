@@ -19,8 +19,7 @@ apt-get install -y --no-install-recommends \
   python3 python3-dev python3-setuptools \
   iasl uuid-dev libncurses-dev \
   pkg-config libglib2.0-dev libpixman-1-dev \
-  libyajl-dev flex bison ninja-build curl rsync cmake \
-  flex bison libglib2.0-dev libjson-c-dev libyajl-dev \
+  libyajl-dev flex bison ninja-build curl cmake libjson-c-dev \
   rsync python3-pip sudo ccache dmidecode libgcc-11-dev
 apt-get clean
 rm -rf /var/lib/apt/lists/*
