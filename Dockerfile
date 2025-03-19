@@ -112,7 +112,7 @@ ninja -C build install
 EOF
 
 FROM ${BASEIMAGE} AS python-base
-ARG POETRY_VERSION="1.8.3"
+ARG POETRY_VERSION="2.1.1"
 
 COPY --from=vmsifter-xtf-builder /code/xtf-install/code/xtf/  /code/xtf/
 COPY --from=vmsifter-xen-builder /code/xen-install/ /code/xen-install/
@@ -122,13 +122,12 @@ COPY --from=vmsifter-injector-builder /usr/local/bin/injector /usr/local/bin/inj
 RUN <<EOF
 set -e
 apt-get update && apt-get install --no-install-recommends -y \
-  rsync curl sudo dmidecode libyajl-dev \
+  build-essential rsync curl sudo dmidecode libyajl-dev \
   libjson-c-dev libglib2.0-dev libpixman-1-dev
 rsync -au /code/xen-install/ /
 rsync -au /code/libvmi-install/ /usr/local/
 # cleanup
 apt-get upgrade -y
-apt-get remove -y linux-libc-dev
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF
