@@ -64,12 +64,26 @@ class Worker(ProtectedContextManager):
     def fuzzer(self):
         return self._fuzzer
 
-    @staticmethod
-    def _recv_injector_result(cli_sock, view) -> InjectorResultMessage:
-        num_bytes: int = cli_sock.recv_into(view[:])
-        if num_bytes == 0:
-            raise EOFError("Injector has closed the communication")
+    def _send_instruction(self, cli_sock, index, new_insn):
+        """Send instruction to the injector"""
+        if self._logger.isEnabledFor(logging.DEBUG):
+            self._logger.debug("[%d]Sending buffer %s", index, new_insn.hex())
+        try:
+            cli_sock.send(new_insn)
+        except (BrokenPipeError, ConnectionResetError) as e:
+            raise EOFError("Injector has closed the communication") from e
+
+    def _recv_injector_result(self, cli_sock, index, view) -> InjectorResultMessage:
+        try:
+            num_bytes: int = cli_sock.recv_into(view[:])
+            if num_bytes == 0:
+                raise EOFError("Injector has closed the communication")
+        except ConnectionResetError as e:
+            raise EOFError("Injector has closed the communication") from e
         cli_msg = InjectorResultMessage.from_buffer(view)
+        # display received data
+        if self._logger.isEnabledFor(logging.DEBUG):
+            self._logger.debug("[%d]Recv msg %s", index, pformat(cli_msg.repr_recv()))
         return cli_msg
 
     def handle_client(self, cli_sock, cli_addr) -> WorkerStats:
@@ -83,7 +97,7 @@ class Worker(ProtectedContextManager):
             # wait for first message from injector
             cli_msg_bytes: bytearray = bytearray(InjectorResultMessage.size())
             cli_msg_view = memoryview(cli_msg_bytes)
-            cli_msg = self._recv_injector_result(cli_sock, cli_msg_view)
+            cli_msg = self._recv_injector_result(cli_sock, 0, cli_msg_view)
 
             result = None
             # store error if any
@@ -124,17 +138,14 @@ class Worker(ProtectedContextManager):
                         # update current
                         cur_begin = datetime.now()
 
-                    # send new insn to injector
-                    if self._logger.isEnabledFor(logging.DEBUG):
-                        self._logger.debug("[%d]Sending buffer %s", index, new_insn.hex())
-                    cli_sock.send(new_insn)
-
-                    # get execution result
-                    cli_msg = self._recv_injector_result(cli_sock, cli_msg_view)
-
-                    # display received data
-                    if self._logger.isEnabledFor(logging.DEBUG):
-                        self._logger.debug("[%d]Recv msg %s", index, pformat(cli_msg.repr_recv()))
+                    try:
+                        # send new insn to injector
+                        self._send_instruction(cli_sock, index, new_insn)
+                        # get execution result
+                        cli_msg = self._recv_injector_result(cli_sock, index, cli_msg_view)
+                    except EOFError:
+                        self._logger.info("[%d]Injector has closed the communication", index)
+                        break
 
                     result = FuzzerExecResult.factory_from_injector_message(cli_msg)
                     # sanity check
