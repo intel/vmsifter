@@ -21,7 +21,7 @@ apt-get install -y --no-install-recommends \
   pkg-config libglib2.0-dev libpixman-1-dev \
   libyajl-dev flex bison ninja-build curl rsync cmake \
   flex bison libglib2.0-dev libjson-c-dev libyajl-dev \
-  rsync python3-pip sudo ccache dmidecode
+  rsync python3-pip sudo ccache dmidecode libgcc-11-dev
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF
