@@ -1,7 +1,6 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: MIT
 
-import asyncio
 import signal
 import subprocess
 import threading
@@ -60,7 +59,7 @@ class XenVMInjector(AbstractInjector):
 
         cmd = ["sudo", "xenpm", "set-cpufreq-cppc", "performance"]
         self.logger.info("Setting CPU frequency: %s", cmd)
-        subprocess.call(cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+        subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def _create_parent_vm(self) -> int:
         """Create parent Xen VM
