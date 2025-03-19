@@ -56,6 +56,8 @@ WORKDIR /code/xen
 
 RUN --mount=type=cache,target=/root/.ccache <<EOF
 set -e
+# python 3.13 lacks distutils
+pip install wheel setuptools
 make distclean
 patch -p1 < ../patches/0001-xen-x86-Make-XEN_DOMCTL_get_vcpu_msrs-more-configura.patch
 patch -p1 < ../patches/0003-xen-x86-monitor-report-extra-vmexit-information.patch
