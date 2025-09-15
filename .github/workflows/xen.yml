@@ -4,12 +4,14 @@ on:
     branches:
       - main
     paths:
+      - '.github/workflows/xen.yml'
       - 'patches/**'
       - '.gitmodules'
     tags:
       - 'v*'
   pull_request:
     paths:
+      - '.github/workflows/xen.yml'
       - 'patches/**'
       - '.gitmodules'
 
