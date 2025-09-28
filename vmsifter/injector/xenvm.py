@@ -102,8 +102,8 @@ class XenVMInjector(AbstractInjector):
     def _fork_vm(self, domid):
         """fork VM"""
         self.logger.info("Setup child")
+        # Note: we cannot use "sudo" here, since it will corrupt Python's console output if used with Popen
         cmd = [
-            "sudo",
             f"{self._inj_settings.INJECTOR_PATH}",
             "--socket",
             str(self._socket_path),
