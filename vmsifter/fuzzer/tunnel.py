@@ -213,7 +213,7 @@ class TunnelFuzzer(AbstractInsnGenerator):
             (self.cache_dyna_insn_buf_size * 2 + (self.cache_dyna_insn_buf_size - 1)) - len(view_hex_str) + 2
         )
         marker_str = (
-            f"{view_hex_str[:stop]}[{view_hex_str[stop:stop+2]}]{view_hex_str[stop+2:]}{' ':{filler_size}}"
+            f"{view_hex_str[:stop]}[{view_hex_str[stop:stop + 2]}]{view_hex_str[stop + 2:]}{' ':{filler_size}}"
             f" | {self.byterange_completion.completion_rate(self.view):.{self.cache_dyna_completion_rate_precision}f}%"
         )
         return marker_str

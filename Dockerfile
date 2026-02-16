@@ -136,6 +136,8 @@ EOF
 
 # ensure xl is setuid
 RUN chmod u+s /usr/local/sbin/xl
+# ensure injector is setuid to access xc interface
+RUN chmod u+s /usr/local/bin/injector
 
 # setup python env vars
 ENV PYTHONUNBUFFERED=1 \

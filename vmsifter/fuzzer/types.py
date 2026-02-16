@@ -300,7 +300,7 @@ class AbstractInsnGenerator(ABC):
         # 15 * 2: one byte uses 2 chars to be displayed: 00
         # 15 - 1: the spaces between the bytes
         filler_size: int = (15 * 2 + (15 - 1)) - len(current_str)
-        return f"{current_str}{' '*filler_size}"
+        return f"{current_str}{' ' * filler_size}"
 
     @property
     def current_insn(self) -> memoryview:
