@@ -82,7 +82,7 @@ settings = Dynaconf(
         Validator("x86.prefix_64", default=lambda _settings, _value: [i for i in range(0x40, 0x50)]),  # rex
         Validator("x86.exec_mode", cast=str),
         Validator("x86.min_buffer", cast=bytes, default=b"\x00"),
-        Validator("x86.max_end_first_byte", cast=bytes, default=b"\xFF"),
+        Validator("x86.max_end_first_byte", cast=bytes, default=b"\xff"),
         # TODO: validation 32/32pae/64
         Validator("mode_prefix", default=assign_prefix),
         Validator("fuzzer.drizzler.seed", default=random.randrange(sys.maxsize), cast=int),
