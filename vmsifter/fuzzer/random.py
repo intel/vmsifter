@@ -9,7 +9,7 @@ from collections.abc import Generator
 
 from attrs import define
 
-from vmsifter.fuzzer.types import AbstractInsnGenerator, FuzzerExecResult
+from vmsifter.fuzzer.types import AbstractInsnGenerator, FinalLogResult, FuzzerExecResult, Interrupted
 
 
 # keep slots disabled, too complicated with inheritance
@@ -23,5 +23,9 @@ class RandomFuzzer(AbstractInsnGenerator):
 
     def gen(self) -> Generator[memoryview, FuzzerExecResult, None]:
         while True:
-            yield self.current_insn
+            result: FuzzerExecResult = yield self.current_insn
+            if isinstance(result, Interrupted):
+                # external interrupt, retry
+                continue
+            result.final = FinalLogResult(exec_res=result, insn=self.current_insn.hex(), len=self.insn_length)
             self._randbytes()
