@@ -23,7 +23,6 @@ class WorkerStats:
     total_seconds: float
     general: Counter = field(factory=Counter)
     exitstats: Counter = field(factory=Counter)
-    interruptstats: Counter = field(factory=Counter)
 
     @property
     def exec_speed(self) -> int:
@@ -39,7 +38,6 @@ class Worker(ProtectedContextManager):
         # stats
         self._stats: Counter = Counter()
         self._exitstats: Counter = Counter()
-        self._interruptstats: Counter = Counter()
         # workaround dynaconf perf issue
         self._cache_dyna_insn_buf_size = settings.insn_buf_size
         self._cache_dyna_refresh_frequency = settings.refresh_frequency
@@ -179,12 +177,10 @@ class Worker(ProtectedContextManager):
                 final_stats = WorkerStats(
                     general=self._stats,
                     exitstats=self._exitstats,
-                    interruptstats=self._interruptstats,
                     nb_insn=index,
                     total_seconds=(end - begin).total_seconds(),
                 )
                 self._logger.info("VMEXIT Stats: %s", pformat(self._exitstats))
-                self._logger.info("Interrupt Stats: %s", pformat(self._interruptstats))
                 self._logger.info("Sifter Stats: %s", pformat(self._stats))
                 self._logger.info("Speed: %s insn/sec", final_stats.exec_speed)
                 # return will omit raising the exception if any

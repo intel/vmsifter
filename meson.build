@@ -2,7 +2,6 @@ project('injector', 'c',
   version : '1.0',
   default_options : ['warning_level=2', 'werror=true', 'strip=true', 'buildtype=release', 'b_pie=true'])
 
-glib = dependency('glib-2.0')
 libvmi = dependency('libvmi')
 libxc = dependency('xencontrol')
 libxl = dependency('xenlight')
@@ -21,5 +20,5 @@ executable('injector',
            'src/forkvm.c',
            'src/signal.c',
            'src/vmi.c',
-           dependencies : [ libxc, libxl, glib, libvmi ],
+           dependencies : [ libxc, libxl, libvmi ],
            install : true)

@@ -987,8 +987,6 @@ class Driver(object):
         self.logger = logging.getLogger(f"{self.__module__}.{self.__class__.__name__}")
         self.spec = spec
         self.templateHeader = ""
-        self.templateBottom = ""
-        self.extraData = ""
         self.tests = []
         self.numTests = 0
         self.RndInstrs = []
@@ -1027,20 +1025,6 @@ class Driver(object):
     def header(self, text):
         self.templateHeader = self.templateHeader + text
 
-    def bottom(self, text):
-        self.templateBottom = self.templateBottom + text
-
-    def extraData(self, text):
-        self.extraData = self.extraData + text
-
-    def emitFunctionStart(self):
-        self.header("extern dumpRegs; ")
-        self.header("extern buffer; ")
-        self.header("section .note.GNU-stack noalloc noexec nowrite progbits; ")
-        self.header("section .text;global foo;;foo:; ")
-        # rbp is our scratch register within signal handlers. save it.
-        self.header("push rbp; ")
-
     def emitInitializeRegs(self):
         if random.randint(0, 1000) % 10 == 0:
             for r in self.spec.regs64b:
@@ -1054,47 +1038,12 @@ class Driver(object):
                 instr = "mov " + str(r) + ", " + str(value) + ";"
                 self.header(instr)
 
-    def emitBottom(self):
-        self.bottom("mov rbp, rsp;")
-        self.bottom("push rax;")
-        self.bottom("push rbx;")
-        self.bottom("push rcx;")
-        self.bottom("push rdx;")
-        self.bottom("push rsi;")
-        self.bottom("push rdi;")
-        self.bottom("push r8;")
-        self.bottom("push r9;")
-        self.bottom("push r10;")
-        self.bottom("push r11;")
-        self.bottom("push r12;")
-        self.bottom("push r13;")
-        self.bottom("push r14;")
-        self.bottom("push r15;")
-        self.bottom("call dumpRegs;")
-        self.bottom("add rsp, 112;")
-        # rbp is our scratch reg within signal handlers. recover it.
-        self.bottom("pop rbp;")
-        self.bottom("retq;")
-
-    def emitExtraData(self):
-        self.extraData = ";global divdata;divdata:; "
-
-        nLabels = self.spec.getDivLabel()
-        i = 0
-        while i < nLabels:
-            self.extraData = f"{self.extraData}db QWORD divlabel_{i}; "
-            i = i + 1
-
     def generateTests(self, targets):
         self.initializeRandomInjection(targets)
-        # self.emitFunctionStart()
         self.emitInitializeRegs()
         self.emitRandomInstructions()
         for t in targets:
             self.emitTests(t)
-        # self.emitBottom()
-        # self.emitExtraData()
-        # self.writeTests(targets)
 
     def initializeRandomInjection(self, targets):
         for t in targets:
@@ -1167,41 +1116,6 @@ class Driver(object):
                 i = i + 1
 
         self.tests.append(tests)
-
-    def writeTests(self, targets):
-        for i, testVariants in enumerate(self.tests):
-            tgt = targets[i]
-            for j, test in enumerate(testVariants):
-                # TODO: separate testVariants in subdirectories.
-                name = f"{self.output}/t_{tgt.mnemonic}"
-                lfs = "oracle.lfence.s"
-                cfs = "oracle.clflush.s"
-                if j == 0:
-                    tname = f"{name}.base.s"
-                    fname = f"{name}.base.{cfs}"
-                    oname = f"{name}.base.{lfs}"
-                else:
-                    tname = f"{name}.{i:02x}.{j:04x}.s"
-                    fname = f"{name}.{i:02x}.{j:04x}.{cfs}"
-                    oname = f"{name}.{i:02x}.{j:04x}.{lfs}"
-
-                # write test without any injection.
-                self.writeTest(random, tname, oname, fname, test, 0)
-
-                if self.injectionChance > 0:
-                    k = 0
-                    while k < self.injectionsPerTest:
-                        if j == 0:
-                            tname = f"{name}.inject.base.s"
-                            fname = f"{name}.inject.base.{cfs}"
-                            oname = f"{name}.inject.base.{lfs}"
-                        else:
-                            tname = f"{name}.inject.{i:02x}.{j:04x}.{k:04x}.s"
-                            fname = f"{name}.inject.{i:02x}.{j:04x}.{k:04x}.{cfs}"
-                            oname = f"{name}.inject.{i:02x}.{j:04x}.{k:04x}.{lfs}"
-
-                        self.writeTest(random, tname, oname, fname, test, self.injectionChance)
-                        k = k + 1
 
     def serializeInstr(self, instr):
         serialized = ""
