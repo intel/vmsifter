@@ -96,7 +96,6 @@ check_untyped_defs = true
 # exclude Drizzler
 exclude = [
     'drizzler.py',
-    'csv.py',
 ]
 
 [tool.pytest.ini_options]

@@ -18,7 +18,7 @@ from vmsifter.fuzzer.types import AbstractInsnGenerator, FinalLogResult, FuzzerE
 @define(slots=False, auto_attribs=True, auto_detect=True)
 class CsvFuzzer(AbstractInsnGenerator):
     def __init__(self, insn_buffer: Optional[bytearray] = None, extra_params: Optional[List[str]] = None):
-        super().__init__(None, extra_params=extra_params)
+        super().__init__(extra_params=extra_params)
         # check for extra params
         if not self.extra_params:
             raise ValueError("CSVFuzzer requires a CSV file parameter. Use -e <csv_file> to specify it.")
