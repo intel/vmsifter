@@ -4,9 +4,10 @@
 import ctypes
 import logging
 from abc import abstractmethod
+from contextlib import nullcontext
 from enum import Enum, IntFlag, auto
 from pathlib import Path
-from typing import Dict, Optional, Type
+from typing import ContextManager, Dict, Optional, Type
 
 from attr import define, field
 
@@ -34,6 +35,11 @@ class AbstractInjector(ProtectedContextManager):
     @abstractmethod
     def get_type() -> InjectorType:
         pass
+
+    @classmethod
+    def shared_setup(cls) -> ContextManager[None]:
+        """Resources shared by all injectors of this type. Entered once, exited after the last injector."""
+        return nullcontext()
 
     @property
     def logger(self):

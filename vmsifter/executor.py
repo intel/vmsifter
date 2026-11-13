@@ -71,7 +71,11 @@ class SifterExecutor(ProtectedContextManager):
         # 3. set socket listen state
         self._sock.listen(settings.jobs)
 
-        # 4. set available CPUs
+        # 4. resources shared by the injectors (parent VM): entered before anything that uses them,
+        # so that they are released last
+        self._ex.enter_context(get_selected_injector().shared_setup())
+
+        # 5. set available CPUs
         av_pcpu_list = [x for x in get_available_pcpus()]
         max_pcpu = min(settings.jobs, len(av_pcpu_list))
         self._logger.info("PCPU available: %s <=> Max jobs: %s => %s", len(av_pcpu_list), settings.jobs, max_pcpu)
