@@ -273,7 +273,8 @@ class AbstractInsnGenerator(ABC):
             self.insn_length = min_len
             self.insn_buffer = self.__class__._get_default_buffer()
         else:
-            self.insn_length = len(self.insn_buffer)
+            self.insn_buffer = buffer
+            self.insn_length = len(buffer)
             # fill if needed
             fill_size = settings.insn_buf_size - self.insn_length
             self.insn_buffer.extend(bytearray(fill_size))
