@@ -193,18 +193,18 @@ static event_response_t cpuid_cb(vmi_instance_t vmi, vmi_event_t *event)
     return VMI_EVENT_RESPONSE_SET_REGISTERS;
 }
 
-static void setup_parent(uint32_t domid, char *perfcts, char *init_regs_override)
+static bool setup_parent(uint32_t domid, char *perfcts, char *init_regs_override)
 {
     if ( !(xc = xc_interface_open(0, 0, 0)) )
     {
         perror("Failed to grab xc interface\n");
-        return;
+        return false;
     }
 
     if ( !setup_vmi(&vmi, NULL, domid, true, false) )
     {
         perror("Failed to initialize\n");
-        return;
+        return false;
     }
 
     if ( perfcts )
@@ -234,7 +234,7 @@ static void setup_parent(uint32_t domid, char *perfcts, char *init_regs_override
             if ( i >= NUMBER_OF_REGISTERS )
             {
                 printf("[%d] '%s' is invalid as a register name\n", pinned_cpu, regs);
-                return;
+                return false;
             }
 
             regs = strtok(NULL, ",");
@@ -242,7 +242,7 @@ static void setup_parent(uint32_t domid, char *perfcts, char *init_regs_override
             if ( !regs )
             {
                 printf("[%d] No value provided for register %s initialization\n", pinned_cpu, init_regs[i].name);
-                return;
+                return false;
             }
 
             init_regs[i].init_val = strtoull(regs, NULL, 0);
@@ -254,12 +254,13 @@ static void setup_parent(uint32_t domid, char *perfcts, char *init_regs_override
     cpuid_event.callback = cpuid_cb;
 
     if ( VMI_FAILURE == vmi_register_event(vmi, &cpuid_event) )
-        return;
+        return false;
 
     loop(vmi);
 
     vmi_destroy(vmi);
     xc_interface_close(xc);
+    return true;
 }
 
 /*
@@ -482,8 +483,9 @@ static void populate_pagetable_pages(vmi_instance_t vmi, addr_t pt, addr_t va)
     page_dedup(vmi, info.x86_ia32e.pml4e_location, VMI_MEMACCESS_WX);
 }
 
-static void fuzz(uint32_t domid, char *input, char *sock, uint16_t pinned_cpu)
+static bool fuzz(uint32_t domid, char *input, char *sock, uint16_t pinned_cpu)
 {
+    bool ret = false;
     struct config *conf = NULL;
     int sockfd = 0;
     FILE *inputfd = NULL;
@@ -495,7 +497,7 @@ static void fuzz(uint32_t domid, char *input, char *sock, uint16_t pinned_cpu)
         // SOCK_SEQPACKET: one recv() is one whole message from the Python worker
         if (((sockfd = socket(AF_UNIX, SOCK_SEQPACKET, 0)) == -1)) {
             perror("socket");
-            return;
+            return false;
         }
         // set server address
         struct sockaddr_un server_addr;
@@ -582,6 +584,7 @@ static void fuzz(uint32_t domid, char *input, char *sock, uint16_t pinned_cpu)
     vmi_register_event(vmi, &exit_event);
 
     loop(vmi);
+    ret = true;
 
 done:
     if ( pagetable_pages )
@@ -604,6 +607,7 @@ done:
         xc_domain_destroy(xc, forkid);
         xc_interface_close(xc);
     }
+    return ret;
 }
 
 static void help(void)
@@ -721,10 +725,8 @@ int main(int argc, char** argv)
 
     setup_signal_handlers();
 
-    if ( setup )
-        setup_parent(domid, perfcts, init_regs_override);
-    else
-        fuzz(domid, input, sock, pinned_cpu);
+    bool ok = setup ? setup_parent(domid, perfcts, init_regs_override)
+                    : fuzz(domid, input, sock, pinned_cpu);
 
-    return 0;
+    return ok ? 0 : 1;
 }
