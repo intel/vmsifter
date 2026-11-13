@@ -8,7 +8,6 @@ static struct sigaction act;
 
 static void close_handler(int sig)
 {
-    printf("Close signal received\n");
     interrupted = sig;
 
     if ( vmi )

@@ -25,6 +25,7 @@ bool setup_vmi(vmi_instance_t *vmi, char* domain, uint64_t domid, bool init_even
     {
         fprintf(stderr, "Error in vmi_init_paging!\n");
         vmi_destroy(*vmi);
+        *vmi = NULL;
         return false;
     }
 
@@ -33,6 +34,7 @@ bool setup_vmi(vmi_instance_t *vmi, char* domain, uint64_t domid, bool init_even
     {
         fprintf(stderr, "Error in vmi_get_vcpuregs!\n");
         vmi_destroy(*vmi);
+        *vmi = NULL;
         return false;
     }
 
