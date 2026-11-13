@@ -128,7 +128,7 @@ class Interrupted(FuzzerExecResult):
 class NMI(FuzzerExecResult):  # type: ignore[override]
     reason: int
     interrupt_type: InjInterruptTypeEnum
-    interrupt: Optional[InjInterruptEnum] = field(eq=False, default=None)
+    interrupt: Optional[InjInterruptEnum] = None
     cr2: Optional[int] = field(eq=False, default=None)
     stack_value: Optional[int] = field(eq=False, default=None)
     nmi_unblocking_due_to_iret: Optional[int] = field(eq=False, default=None)
