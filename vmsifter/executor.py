@@ -58,7 +58,8 @@ class SifterExecutor(ProtectedContextManager):
         super()._safe_enter()
 
         # 1. create socket
-        self._sock = self._ex.enter_context(socket.socket(socket.AF_UNIX, socket.SOCK_STREAM))
+        # SOCK_SEQPACKET: message boundaries are kept, one recv() is one whole message
+        self._sock = self._ex.enter_context(socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET))
 
         # 2. bind socket
         self._logger.debug("Bind socket: %s", self._sock_path)
