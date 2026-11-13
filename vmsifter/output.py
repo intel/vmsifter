@@ -37,8 +37,8 @@ class CSVOutput(ProtectedContextManager):
         self._results_path = self._workdir_path / f"{self.__class__.RESULTS_CSV_BASENAME}_{id}.csv"
         self._invalid_path = self._workdir_path / f"{self.__class__.INVALID_INSN_CSV_BASENAME}_{id}.csv"
 
-        self._results_f = self._ex.enter_context(open(self._results_path, "a", newline=""))
-        self._invalid_f = self._ex.enter_context(open(self._invalid_path, "a", newline=""))
+        self._results_f = self._ex.enter_context(open(self._results_path, "w", newline=""))
+        self._invalid_f = self._ex.enter_context(open(self._invalid_path, "w", newline=""))
 
         self._results_writer = csv.writer(self._results_f)
         self._invalid_writer = csv.writer(self._invalid_f)

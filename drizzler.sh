@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: MIT
 
 mkdir -p "$PWD/workdir"
-rm $PWD/workdir/results.csv || :
 
 docker run --rm -ti \
     --privileged \
