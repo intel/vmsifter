@@ -1,10 +1,11 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: MIT
 
+import logging
 import subprocess
-import threading
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, Type
+from typing import Generator, Optional, Type
 
 from vmsifter.config import InjectorType, get_injector_settings, settings
 from vmsifter.utils.xen import gen_tmp_xenvm_configfile, xtf_vm
@@ -14,9 +15,10 @@ from .types import AbstractInjector
 # seconds given to the injector to clean up after SIGTERM
 INJECTOR_STOP_TIMEOUT = 5
 
+logger = logging.getLogger(__name__)
+
 
 class XenVMInjector(AbstractInjector):
-    LOCK = threading.Lock()
     PARENT_DOMID: Optional[int] = None
     ID: int = 1
 
@@ -29,15 +31,24 @@ class XenVMInjector(AbstractInjector):
     def get_type() -> InjectorType:
         return InjectorType.XENVM
 
+    @classmethod
+    @contextmanager
+    def shared_setup(cls) -> Generator[None, None, None]:
+        """Create the parent VM, destroyed on exit: it has to outlive every fork"""
+        cls._set_cpu_perf_state()
+        with gen_tmp_xenvm_configfile() as tmp_file_path, xtf_vm(tmp_file_path) as domid:
+            cls._setup_parent_vm(domid)
+            cls.PARENT_DOMID = domid
+            try:
+                yield
+            finally:
+                cls.PARENT_DOMID = None
+
     def _safe_enter(self):
         super()._safe_enter()
-        with self.__class__.LOCK:
-            if self.__class__.PARENT_DOMID is None:
-                self._set_cpu_perf_state()
-                domid: int = self._create_parent_vm()
-                self.__class__.PARENT_DOMID = domid
-            domid = self.__class__.PARENT_DOMID
-        self._fork_vm(domid)
+        if self.__class__.PARENT_DOMID is None:
+            raise RuntimeError("No parent VM to fork: shared_setup() must be entered first")
+        self._fork_vm(self.__class__.PARENT_DOMID)
         return self
 
     def __exit__(
@@ -56,53 +67,48 @@ class XenVMInjector(AbstractInjector):
         super().__exit__(__exc_type, __exc_value, __traceback)
         self.logger.debug("Cleanup done")
 
-    def _set_cpu_perf_state(self):
+    @staticmethod
+    def _set_cpu_perf_state():
         """Set CPU performance state
 
         (only needed when hwp is used, otherwise its already set from the Xen command line)
         """
 
         cmd = ["sudo", "xenpm", "set-cpufreq-cppc", "performance"]
-        self.logger.info("Setting CPU frequency: %s", cmd)
+        logger.info("Setting CPU frequency: %s", cmd)
         subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    def _create_parent_vm(self) -> int:
-        """Create parent Xen VM
-
-        Returns:
-            The parent VM Xen domain ID"""
-        # gen temporary file
-        tmp_file_path = self._ex.enter_context(gen_tmp_xenvm_configfile())
-        domid: int = self._ex.enter_context(xtf_vm(tmp_file_path))
-        # setup parent
-        self.logger.info("Setup parent")
+    @classmethod
+    def _setup_parent_vm(cls, domid: int):
+        """Run the parent Xen VM until it is ready to be forked"""
+        inj_settings = settings.injector[cls.get_type().name]
+        logger.info("Setup parent")
 
         cmd = [
             "sudo",
-            f"{self._inj_settings.INJECTOR_PATH}",
+            f"{inj_settings.INJECTOR_PATH}",
             "--setup",
             "--domid",
             str(domid),
             "--perfcts",
-            f"{self._inj_settings.perfcts}",
+            f"{inj_settings.perfcts}",
         ]
 
         if settings.debug:
             cmd += ["--debug"]
 
-        if self._inj_settings.sse:
+        if inj_settings.sse:
             cmd += ["--sse"]
 
-        if self._inj_settings.syscall:
+        if inj_settings.syscall:
             cmd += ["--syscall"]
 
-        if self._inj_settings.fpu_emulation:
+        if inj_settings.fpu_emulation:
             cmd += ["--fpu-emulation"]
 
-        self.logger.debug("Launching injector: %s", cmd)
+        logger.debug("Launching injector: %s", cmd)
         subprocess.check_call(cmd)
-        self.logger.info("Parent VM: %s", domid)
-        return domid
+        logger.info("Parent VM: %s", domid)
 
     def _fork_vm(self, domid):
         """fork VM"""
