@@ -25,6 +25,9 @@ from vmsifter.utils import get_available_pcpus, pformat
 from vmsifter.utils.protected_manager import ProtectedContextManager
 from vmsifter.worker import Worker, WorkerStats
 
+# seconds given to a new injector to connect to our socket
+INJECTOR_CONNECT_TIMEOUT = 30
+
 
 class SifterExecutor(ProtectedContextManager):
     """Manages the lifecycle of the vmsifter XTF VM and C helper vmsifter program"""
@@ -70,6 +73,7 @@ class SifterExecutor(ProtectedContextManager):
 
         # 3. set socket listen state
         self._sock.listen(settings.jobs)
+        self._sock.settimeout(INJECTOR_CONNECT_TIMEOUT)
 
         # 4. resources shared by the injectors (parent VM): entered before anything that uses them,
         # so that they are released last
@@ -115,7 +119,11 @@ class SifterExecutor(ProtectedContextManager):
         injector = inj_cls(self._sock_path, pcpu_id)
         injector.__enter__()
         # accept injector client
-        cli_sock, cli_addr = self._sock.accept()
+        try:
+            cli_sock, cli_addr = self._sock.accept()
+        except TimeoutError as e:
+            injector.__exit__(None, None, None)
+            raise RuntimeError(f"Injector for PCPU {pcpu_id} did not connect to {self._sock_path}") from e
         # create Worker
         cli_id = next(self._client_id_count_gen)
         cli = Worker(cli_id, sub_fuzzer)
