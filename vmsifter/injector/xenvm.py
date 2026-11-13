@@ -1,10 +1,8 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: MIT
 
-import signal
 import subprocess
 import threading
-from contextlib import suppress
 from pathlib import Path
 from typing import Optional, Type
 
@@ -12,6 +10,9 @@ from vmsifter.config import InjectorType, get_injector_settings, settings
 from vmsifter.utils.xen import gen_tmp_xenvm_configfile, xtf_vm
 
 from .types import AbstractInjector
+
+# seconds given to the injector to clean up after SIGTERM
+INJECTOR_STOP_TIMEOUT = 5
 
 
 class XenVMInjector(AbstractInjector):
@@ -43,11 +44,15 @@ class XenVMInjector(AbstractInjector):
         self, __exc_type: Optional[Type[BaseException]], __exc_value: Optional[BaseException], __traceback
     ) -> None:
         self.logger.debug("Cleaning up !")
-        # send SIGKILL to injector
+        # SIGTERM lets the injector destroy its fork VM, SIGKILL only if it doesn't stop
         # pypy: with SIGINT the injector doesn't terminate somehow
         if self._proc is not None:
-            with suppress(ProcessLookupError):
-                self._proc.send_signal(signal.SIGKILL)
+            self._proc.terminate()
+            try:
+                self._proc.wait(timeout=INJECTOR_STOP_TIMEOUT)
+            except subprocess.TimeoutExpired:
+                self.logger.warning("Injector did not stop, killing it: its fork VM may be left behind")
+                self._proc.kill()
         super().__exit__(__exc_type, __exc_value, __traceback)
         self.logger.debug("Cleanup done")
 
