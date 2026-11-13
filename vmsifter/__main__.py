@@ -10,8 +10,8 @@ Options:
   -h --help                                     Show this screen.
   -d --debug                                    Toggle debugging
   -r <VALUE> --refresh-freq=<VALUE>             Refresh frequency per <VALUE> instructions
-  -m <mode>, --fuzzer-mode <mode>               Enable fuzzing mode [default: TUNNEL]
-  -i <injector>, --injector-mode <injector>     Select injector mode [default: XENVM]
+  -m <mode>, --fuzzer-mode <mode>               Fuzzing mode (default from config: TUNNEL)
+  -i <injector>, --injector-mode <injector>     Injector mode (default from config: XENVM)
   -j <JOBS>, --jobs <JOBS>                      Use at most <JOBS> jobs
   -e <PARAM>, --fuzzer-param <PARAM>...         Pass extra parameter for fuzzer
   --version                                     Show version.
@@ -72,29 +72,33 @@ def setup_logging(debug_enabled: bool = False):
 @post_mortem
 def main():
     args = docopt(__doc__, version="0.1")
-    settings["debug"] = args["--debug"]
+    # command line options only override the configuration when they are given
+    if args["--debug"]:
+        settings["debug"] = True
     if args["--jobs"]:
         settings["jobs"] = int(args["--jobs"])
     setup_logging(settings["debug"])
 
     with suppress(KeyboardInterrupt):
         # set fuzzing mode
-        try:
+        if args["--fuzzer-mode"]:
             fuzzer_mode_str = args["--fuzzer-mode"].upper()
-            settings.fuzzer_mode = FuzzerType[fuzzer_mode_str]
-        except KeyError:
-            logging.critical("Unknown fuzzer mode %s", fuzzer_mode_str)
-            logging.info("Available modes: %s", [option.name for option in FuzzerType])
-            return 1
+            try:
+                settings.fuzzer_mode = FuzzerType[fuzzer_mode_str]
+            except KeyError:
+                logging.critical("Unknown fuzzer mode %s", fuzzer_mode_str)
+                logging.info("Available modes: %s", [option.name for option in FuzzerType])
+                return 1
 
         # set injector mode
-        try:
+        if args["--injector-mode"]:
             injector_mode_str = args["--injector-mode"].upper()
-            settings.injector_mode = InjectorType[injector_mode_str]
-        except KeyError:
-            logging.critical("Unknown injector mode %s", injector_mode_str)
-            logging.info("Available modes: %s", [option.name for option in InjectorType])
-            return 1
+            try:
+                settings.injector_mode = InjectorType[injector_mode_str]
+            except KeyError:
+                logging.critical("Unknown injector mode %s", injector_mode_str)
+                logging.info("Available modes: %s", [option.name for option in InjectorType])
+                return 1
 
         if args["--refresh-freq"]:
             settings["refresh_frequency"] = int(args["--refresh-freq"])
