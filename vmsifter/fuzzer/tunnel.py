@@ -99,7 +99,8 @@ class TunnelFuzzer(AbstractInsnGenerator):
                     self.view[self.marker_idx] = (leftbits << 4) + 0xF
 
     def _increment_last_byte(self):
-        if self.view[0] >= self.end_first_byte_int:
+        # end_first_byte is inclusive: stop only once that first byte itself is used up
+        if self.marker_idx == 0 and self.view[0] >= self.end_first_byte_int:
             raise StopIteration
         if self.view[self.marker_idx] == 0xFF:
             # roll over
@@ -199,7 +200,7 @@ class TunnelFuzzer(AbstractInsnGenerator):
                     self._increment_last_byte()
                 # check here if the fuzzing is complete / out of range
                 # note: no strict equality check because we skip ahead a few bytes sometimes (see _update_marker)
-                if self.view[0] >= self.end_first_byte_int:
+                if self.view[0] > self.end_first_byte_int:
                     # complete !
                     return
 
