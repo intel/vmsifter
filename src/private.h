@@ -8,7 +8,6 @@
 #define _GNU_SOURCE
 #include <fcntl.h>
 #include <getopt.h>
-#include <glib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,14 +23,10 @@
 #include "vmi.h"
 #include "forkvm.h"
 
-extern char *domain;
 extern uint32_t domid;
 
 extern xc_interface *xc;
 extern vmi_instance_t vmi;
-extern addr_t target_pagetable;
-extern addr_t start_rip;
-extern page_mode_t pm;
 extern int interrupted;
 extern bool debug;
 

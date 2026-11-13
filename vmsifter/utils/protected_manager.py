@@ -1,12 +1,11 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: MIT
 
-from contextlib import AbstractAsyncContextManager, AbstractContextManager, AsyncExitStack, ExitStack, contextmanager
-from types import TracebackType
-from typing import Any, Coroutine, Optional, Type
+from contextlib import AbstractContextManager, ExitStack, contextmanager
+from typing import Optional, Type
 
 
-class ProtectedContextManager(AbstractContextManager, AbstractAsyncContextManager):
+class ProtectedContextManager(AbstractContextManager):
     """
     This class implements a protected __enter__ and __exit__ by an ExitStack
     Ensuring that:
@@ -16,7 +15,6 @@ class ProtectedContextManager(AbstractContextManager, AbstractAsyncContextManage
 
     def __init__(self):
         self._ex = ExitStack()
-        self._aex = AsyncExitStack()
 
     @contextmanager
     def _cleanup_on_error(self):
@@ -44,22 +42,4 @@ class ProtectedContextManager(AbstractContextManager, AbstractAsyncContextManage
         super().__exit__(__exc_type, __exc_value, __traceback)
         # cleanup
         self._ex.__exit__(__exc_type, __exc_value, __traceback)
-        return None
-
-    async def _asafe_enter(self):
-        return self
-
-    async def __aenter__(self) -> Coroutine[Any, Any, Any]:
-        await super().__aenter__()
-        with self._cleanup_on_error():
-            return await self._asafe_enter()
-
-    async def __aexit__(
-        self,
-        __exc_type: Optional[Type[BaseException]],
-        __exc_value: Optional[BaseException],
-        __traceback: Optional[TracebackType],
-    ):
-        await super().__aexit__(__exc_type, __exc_value, __traceback)
-        await self._aex.__aexit__(__exc_type, __exc_value, __traceback)
         return None

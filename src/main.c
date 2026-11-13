@@ -125,7 +125,6 @@ static uint64_t perfct_config[4];
 static uint16_t pinned_cpu;
 static vmi_event_t singlestep_event, cpuid_event, exit_event, mem_event;
 
-static GHashTable *pagetable_pages;
 static void populate_pagetable_pages(vmi_instance_t vmi, addr_t pt, addr_t va);
 
 static event_response_t cpuid_cb(vmi_instance_t vmi, vmi_event_t *event)
@@ -446,12 +445,6 @@ error:
     return 0;
 }
 
-void save_page(addr_t addr)
-{
-    if ( !g_hash_table_lookup(pagetable_pages, GSIZE_TO_POINTER(addr >> 12)) )
-        g_hash_table_insert(pagetable_pages, GSIZE_TO_POINTER(addr >> 12), GINT_TO_POINTER(1));
-}
-
 /*
  * Pagetables in the guest should be deduplicated and mapped r/w in EPT
  */
@@ -470,23 +463,18 @@ static void populate_pagetable_pages(vmi_instance_t vmi, addr_t pt, addr_t va)
             return;
     };
 
-    save_page(info.pt);
     page_dedup(vmi, info.pt, VMI_MEMACCESS_WX);
-    save_page(info.x86_legacy.pte_location);
     page_dedup(vmi, info.x86_legacy.pte_location, VMI_MEMACCESS_WX);
-    save_page(info.x86_legacy.pgd_location);
     page_dedup(vmi, info.x86_legacy.pgd_location, VMI_MEMACCESS_WX);
 
     if ( info.pm == VMI_PM_LEGACY )
         return;
 
-    save_page(info.x86_pae.pdpe_location);
     page_dedup(vmi, info.x86_pae.pdpe_location, VMI_MEMACCESS_WX);
 
     if ( info.pm == VMI_PM_PAE )
         return;
 
-    save_page(info.x86_ia32e.pml4e_location);
     page_dedup(vmi, info.x86_ia32e.pml4e_location, VMI_MEMACCESS_WX);
 }
 
@@ -523,10 +511,6 @@ static bool fuzz(uint32_t domid, char *input, char *sock, uint16_t pinned_cpu)
         perror("Failed to open input\n");
         goto done;
     }
-
-    pagetable_pages = g_hash_table_new(g_direct_hash, g_direct_equal);
-    if ( ! pagetable_pages )
-        goto done;
 
     if ( !(xc = xc_interface_open(0, 0, 0)) )
     {
@@ -594,8 +578,6 @@ static bool fuzz(uint32_t domid, char *input, char *sock, uint16_t pinned_cpu)
     ret = true;
 
 done:
-    if ( pagetable_pages )
-        g_hash_table_destroy(pagetable_pages);
     if ( conf )
         free(conf);
     if ( inputfd )

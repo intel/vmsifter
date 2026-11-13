@@ -182,16 +182,6 @@ class PageFaultECEnum(IntFlag):
     SGX = 1 << 15
 
 
-class InjRIPLocationType(Enum):
-    STACK = 0x1234
-    ECX = 0xBEEF3
-    EDX = 0xBEEF4
-    SYSCALL = 0xBEEF11
-    COMPAT_SYSCALL = 0xBEEF12
-    LONG_SYSCALL = 0xBEEF13
-    SYSENTER = 0xBEEF14
-
-
 # SDM 28.2.1 Table 28-7
 class EPTQualEnum(IntFlag):
     READ = 1
@@ -359,6 +349,3 @@ class InjectorResultMessage(ctypes.Structure):
             "insn_length": self.insn_length,
             "insn_info": self.insn_info,
         }
-
-    def tobytes(self) -> bytes:
-        return ctypes.string_at(ctypes.byref(self), ctypes.sizeof(self))

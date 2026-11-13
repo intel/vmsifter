@@ -21,7 +21,7 @@ bool setup_vmi(vmi_instance_t *vmi, char* domain, uint64_t domid, bool init_even
     if ( VMI_FAILURE == status )
         return false;
 
-    if ( init_paging && VMI_PM_UNKNOWN == (pm = vmi_init_paging(*vmi, 0)) )
+    if ( init_paging && VMI_PM_UNKNOWN == vmi_init_paging(*vmi, 0) )
     {
         fprintf(stderr, "Error in vmi_init_paging!\n");
         vmi_destroy(*vmi);
@@ -37,9 +37,6 @@ bool setup_vmi(vmi_instance_t *vmi, char* domain, uint64_t domid, bool init_even
         *vmi = NULL;
         return false;
     }
-
-    target_pagetable = regs.x86.cr3;
-    start_rip = regs.x86.rip;
 
     return true;
 }
