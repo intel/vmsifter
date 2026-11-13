@@ -120,12 +120,10 @@ class SifterExecutor(ProtectedContextManager):
         future = self.pool_clients.submit(cli.handle_client, cli_sock, cli_addr)
         self._fut_to_client[future] = cli, injector
 
-    def _deallocate_client(self, client: Worker, injector: AbstractInjector) -> int:
-        """Deallocate a Client / Injector and return the PCPU ressource"""
-        pcpu = injector.pinned_cpu
+    def _deallocate_client(self, client: Worker, injector: AbstractInjector):
+        """Deallocate a Client / Injector"""
         client.__exit__(None, None, None)
         injector.__exit__(None, None, None)
-        return pcpu
 
     def run(self, extra_params: Optional[List[str]]):
         # get injector cls
@@ -149,8 +147,6 @@ class SifterExecutor(ProtectedContextManager):
                 # display stats
                 self._logger.info("Worker %s Stats: %s", client.id, pformat(asdict(result)))
             finally:
-                pcpu = self._deallocate_client(client, injector)
-                # put it back in available queue
-                self._av_pcpu.append(pcpu)
+                self._deallocate_client(client, injector)
                 # cleanup
                 del self._fut_to_client[future]

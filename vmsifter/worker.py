@@ -170,6 +170,8 @@ class Worker(ProtectedContextManager):
                     self._stats[result.type_str()] += 1
             except Exception as e:
                 error = e
+                # the rest of this worker's range is lost: say where a new run has to start from
+                self._logger.error("Worker stopped on instruction: %s", self.fuzzer)
             else:
                 self._logger.info("Fuzzing complete.")
             finally:
