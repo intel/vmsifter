@@ -25,8 +25,9 @@ class DrizzlerFuzzer(AbstractInsnGenerator):
         idx3 = random.randint(0, 128)
         return f"mov rcx, {idx3};mov rdi, 0xb000 + {idx1};mov rsi, 0xb000 + {idx2}; "
 
-    def __init__(self, content: Optional[bytearray] = None, extra_params: Optional[List[str]] = None) -> None:
-        super().__init__(insn_buffer=content, extra_params=extra_params)
+    # same parameter names as the attrs fields: partition() copies the fuzzer with them
+    def __init__(self, insn_buffer: Optional[bytearray] = None, extra_params: Optional[List[str]] = None) -> None:
+        super().__init__(insn_buffer=insn_buffer, extra_params=extra_params)
 
         self.logger.info(
             "Drizzler starting with initial seed %u, number of seeds: %u, injections: %u",
@@ -34,6 +35,13 @@ class DrizzlerFuzzer(AbstractInsnGenerator):
             settings.fuzzer.drizzler.num_seeds,
             settings.fuzzer.drizzler.injections,
         )
+
+        # one generation of tests per seed
+        if settings.fuzzer.drizzler.num_seeds > 1:
+            random.seed(settings.fuzzer.drizzler.seed)
+            self.seeds = [random.randrange(sys.maxsize) for i in range(settings.fuzzer.drizzler.num_seeds)]
+        else:
+            self.seeds = [settings.fuzzer.drizzler.seed]
 
         self.generation = 0
         self.setup()
@@ -68,18 +76,12 @@ class DrizzlerFuzzer(AbstractInsnGenerator):
         test.setPrepare(self.prepareMOVSB)
         self.targets.append(test)
 
-        if settings.fuzzer.drizzler.num_seeds > 1:
-            random.seed(settings.fuzzer.drizzler.seed)
-            seeds = [random.randrange(sys.maxsize) for i in range(settings.fuzzer.drizzler.num_seeds)]
-        else:
-            seeds = [settings.fuzzer.drizzler.seed]
-
-        for i, seed in enumerate(seeds, start=1):
-            self.logger.debug("Generating tests with seed %u", seed)
-            self.driver = Driver(seed, settings.fuzzer.drizzler.injections, spec)
-            if settings.fuzzer.drizzler.aggressive:
-                self.driver.setAggressiveTesting()
-            self.driver.generateTests(self.targets)
+        seed = self.seeds[self.generation - 1]
+        self.logger.debug("Generating tests with seed %u", seed)
+        self.driver = Driver(seed, settings.fuzzer.drizzler.injections, spec)
+        if settings.fuzzer.drizzler.aggressive:
+            self.driver.setAggressiveTesting()
+        self.driver.generateTests(self.targets)
 
     def fix_db_and_assemble(self, _generated_test):
         # We need to convert the "db xxx" string manually cause keystone doesn't get it
@@ -170,34 +172,34 @@ class DrizzlerFuzzer(AbstractInsnGenerator):
         # self.logger.debug("Hex: %s", h)
 
     def drizzle(self):
-        if self.current_test_set >= len(self.driver.tests):
-            self.setup()
+        """Generate the next test: each test runs without, then with injections, in the 3 injection types"""
+        while True:
+            if self.current_test_set >= len(self.driver.tests):
+                if self.generation >= len(self.seeds):
+                    # every seed is done
+                    raise StopIteration
+                self.setup()
 
-        test_set = self.driver.tests[self.current_test_set]
-        test = test_set[self.current_test]
+            test_set = self.driver.tests[self.current_test_set]
+            test = test_set[self.current_test]
 
-        if self.base_test_done == 0:
             if self.injection_type < 3:
-                self.generate_test(test, 0, self.injection_type)
+                chance = self.driver.injectionChance if self.base_test_done else 0
+                self.generate_test(test, chance, self.injection_type)
                 self.injection_type += 1
                 return
-            else:
-                self.injection_type = 0
-                self.base_test_done = 1
 
-        if self.injection_type < 3:
-            self.generate_test(test, self.driver.injectionChance, self.injection_type)
-            self.injection_type += 1
-            return
-        else:
             self.injection_type = 0
+            if self.base_test_done == 0:
+                self.base_test_done = 1
+                continue
 
-        self.current_test += 1
-        self.base_test_done = 0
-
-        if self.current_test >= len(self.driver.tests):
-            self.current_test_set += 1
-            self.current_test = 0
+            # onto the next test
+            self.base_test_done = 0
+            self.current_test += 1
+            if self.current_test >= len(test_set):
+                self.current_test_set += 1
+                self.current_test = 0
 
     def gen(self) -> Generator[memoryview, FuzzerExecResult, None]:
         while True:
