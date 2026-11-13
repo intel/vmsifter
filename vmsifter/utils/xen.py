@@ -1,7 +1,6 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: MIT
 
-import json
 import logging
 import re
 import subprocess
@@ -49,6 +48,11 @@ def gen_tmp_xenvm_configfile() -> Generator[Path, None, None]:
 @contextmanager
 def xtf_vm(cfg_file_path: Path) -> Generator[int, None, None]:
     """Creates XTF VMs and destroy it when the resource is released"""
+    # the name is unique (see gen_tmp_xenvm_configfile): VMs left by another run cannot be mistaken for ours
+    m = re.search('^name="(?P<name>.*)"$', cfg_file_path.read_text(), re.MULTILINE)
+    if m is None:
+        raise ValueError(f"No VM name in {cfg_file_path}")
+    name = m.group("name")
     cmd: List[str] = [
         "sudo",
         "xl",
@@ -58,19 +62,12 @@ def xtf_vm(cfg_file_path: Path) -> Generator[int, None, None]:
     ]
     logging.debug("exec: %s", cmd)
     subprocess.check_call(cmd)
-    output = subprocess.check_output(["sudo", "xl", "list", "--long"])
-    xl_list_info = json.loads(output)
-    # look for vm whose name matches xensifter
-    xensifter_vm_list = [vm for vm in xl_list_info if "vmsifter" in vm["config"]["c_info"]["name"]]
-    assert len(xensifter_vm_list) == 1
-    xensifter_vm = xensifter_vm_list.pop()
-    # get domid
-    domid = xensifter_vm["domid"]
     try:
+        domid = int(subprocess.check_output(["sudo", "xl", "domid", name]))
         yield domid
     finally:
-        logging.info("Destroying parent VM (%s)", domid)
-        cmd = ["sudo", "xl", "destroy", str(domid)]
+        logging.info("Destroying parent VM (%s)", name)
+        cmd = ["sudo", "xl", "destroy", name]
         logging.debug("exec: %s", cmd)
         subprocess.check_call(cmd)
 
