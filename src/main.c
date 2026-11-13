@@ -647,8 +647,8 @@ int main(int argc, char** argv)
 
     char* perfcts = getenv("VMSIFTER_PERFCTS");
     char* init_regs_override = getenv("VMSIFTER_INIT_REGS");
-    enable_sse = atoi(getenv("VMSIFTER_ENABLE_SSE")?:"1");
-    enable_syscall = atoi(getenv("VMSIFTER_ENABLE_SYSCALL")?:"1");
+    enable_sse = atoi(getenv("VMSIFTER_ENABLE_SSE")?:"0");
+    enable_syscall = atoi(getenv("VMSIFTER_ENABLE_SYSCALL")?:"0");
     enable_fpu_emulation = atoi(getenv("VMSIFTER_ENABLE_FPU_EMULATION")?:"0");
     insn_buf_size = atoi(getenv("VMSIFTER_INSN_BUF_SIZE")?:"15");
 
