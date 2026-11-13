@@ -492,7 +492,8 @@ static void fuzz(uint32_t domid, char *input, char *sock, uint16_t pinned_cpu)
     if ( sock )
     {
         // create Unix socket
-        if (((sockfd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)) {
+        // SOCK_SEQPACKET: one recv() is one whole message from the Python worker
+        if (((sockfd = socket(AF_UNIX, SOCK_SEQPACKET, 0)) == -1)) {
             perror("socket");
             return;
         }

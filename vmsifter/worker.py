@@ -78,6 +78,9 @@ class Worker(ProtectedContextManager):
             num_bytes: int = cli_sock.recv_into(view[:])
             if num_bytes == 0:
                 raise EOFError("Injector has closed the communication")
+            if num_bytes != len(view):
+                # injector built with a different InjectorResultMessage layout ?
+                raise ValueError(f"Injector sent {num_bytes} bytes, expected a {len(view)} bytes message")
         except ConnectionResetError as e:
             raise EOFError("Injector has closed the communication") from e
         cli_msg = InjectorResultMessage.from_buffer(view)
