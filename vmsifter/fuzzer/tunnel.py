@@ -41,9 +41,6 @@ class TunnelFuzzer(AbstractInsnGenerator):
     # retrieve values here and keep them
     cache_dyna_completion_rate_precision: int = field(init=False, default=settings.completion_rate_precision)
     byterange_completion: ByteRangeCompletion = field(init=False, default=None)
-    # counters to skip ahead
-    counter: int = field(init=False, default=0)
-    counter2: int = field(init=False, default=0)
 
     def _check_end_first_byte(self, value):
         # make sure that the byte is >= than the content's first byte
@@ -85,8 +82,9 @@ class TunnelFuzzer(AbstractInsnGenerator):
             # and current type
             self.type = type
 
-            self.counter = 0
-            self.counter2 = 0
+            # new kind of result: start counting similar results again
+            self.split_byte_left = 0
+            self.split_byte_right = 0
         else:
             # We'll skip ahead 4-bits after 0xA instructions that look the same
             self.split_byte_right += 1
