@@ -33,12 +33,8 @@ class CsvFuzzer(AbstractInsnGenerator):
         self.reader = csv.DictReader(f)
         self.row = next(self.reader)
         insn = bytearray.fromhex(self.row["insn"])
-        self.init_buffer(buffer=insn)
 
-        if settings.extra_byte != 0:
-            self.insn_length += settings.extra_byte
-
-        self.prefix_len = 0
+        prefix: tuple = ()
         if settings.min_prefix_count != 0:
             self.prefix_list = []
 
@@ -47,15 +43,12 @@ class CsvFuzzer(AbstractInsnGenerator):
 
             self.prefix_iterator = itertools.tee(self.prefix_list, 1)[0]
             prefix = next(self.prefix_iterator)
-            self.prefix_len = len(prefix)
-            self.insn_buffer[: self.prefix_len] = prefix
-            self.insn_length += self.prefix_len
+        self.prefix_len = len(prefix)
 
-        if self.insn_length > settings.insn_buf_size:
+        buffer = bytearray(prefix) + insn + bytearray(settings.extra_byte)
+        if len(buffer) > settings.insn_buf_size:
             raise Exception("Instruction length is too long, should increase INSN_BUF_SIZE")
-
-        for i in range(len(insn)):
-            self.insn_buffer[self.prefix_len + i] = insn[i]
+        self.init_buffer(buffer=buffer)
 
     def prefix_prepender(self):
         if settings.min_prefix_count == 0:
