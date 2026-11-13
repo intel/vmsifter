@@ -315,7 +315,12 @@ static event_response_t exit_cb(vmi_instance_t vmi, vmi_event_t *event)
     struct InjectorInputMessage *input_msg = &conf->input_msg;
     struct InjectorResultMessage *result_msg = &conf->result_msg;
 
-    xc_vcpu_get_msrs(xc, vmi_get_vmid(vmi), event->vcpu_id, NUMBER_OF_PERF_COUNTERS, (xc_vcpumsr_t *)&perfct_msrs);
+    if ( xc_vcpu_get_msrs(xc, vmi_get_vmid(vmi), event->vcpu_id, NUMBER_OF_PERF_COUNTERS, (xc_vcpumsr_t *)&perfct_msrs) < 0 )
+    {
+        // perfct_msrs still holds the values of the previous instruction
+        perror("Reading performance counters failed");
+        goto error;
+    }
 
     if ( debug )
     {
@@ -385,7 +390,9 @@ static event_response_t exit_cb(vmi_instance_t vmi, vmi_event_t *event)
             .translate_mechanism = event->page_mode == VMI_PM_NONE ? VMI_TM_NONE : VMI_TM_PROCESS_DTB,
             .addr = event->x86_regs->rsp,
             .pt = event->x86_regs->cr3);
-        vmi_read_64(vmi, &ctx, &result_msg->stack_value);
+        // the instruction may have moved rsp somewhere unmapped: don't send the value of the previous instruction
+        if ( VMI_FAILURE == vmi_read_64(vmi, &ctx, &result_msg->stack_value) )
+            result_msg->stack_value = 0;
 
         // send message
         int sockfd = conf->sockfd;
@@ -604,7 +611,8 @@ done:
     }
     if ( xc )
     {
-        xc_domain_destroy(xc, forkid);
+        if ( forkid )
+            xc_domain_destroy(xc, forkid);
         xc_interface_close(xc);
     }
     return ret;
